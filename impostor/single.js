@@ -14,7 +14,7 @@ const words=[
 {w:"Dokter",c:"Pekerjaan",q:["Pasien","Perawatan","Obat"]},{w:"Guru",c:"Pekerjaan",q:["Sekolah","Mengajar","Murid"]},{w:"Pilot",c:"Pekerjaan",q:["Kokpit","Udara","Perjalanan"]},{w:"Koki",c:"Pekerjaan",q:["Dapur","Masak","Restoran"]},
 {w:"Sepak Bola",c:"Olahraga",q:["Bola","Gawang","Lapangan"]},{w:"Badminton",c:"Olahraga",q:["Raket","Kok","Net"]},{w:"Renang",c:"Olahraga",q:["Air","Kolam","Gaya"]},{w:"Tinju",c:"Olahraga",q:["Ring","Sarung tangan","Pukul"]}];
 
-let st={players:[],imp:1,roles:[],roleI:0,voteI:0,votes:{},chosen:null,word:null,matchOver:false,phase:"singleSetup",cats:[...ALL],revealed:false};
+let st={players:[],imp:1,roles:[],roleI:0,voteI:0,votes:{},chosen:null,word:null,matchOver:false,phase:"singleSetup",cats:[...ALL],revealed:false,knows:true,clueCount:2,showCat:true,lastWord:null};
 function save(){localStorage.setItem(STORE,JSON.stringify(st))}
 function load(){try{const r=localStorage.getItem(STORE);if(r)st={...st,...JSON.parse(r)}}catch{}}
 function show(id){screens.forEach(x=>$(x).classList.add("hidden"));$(id).classList.remove("hidden");st.phase=id;save()}
@@ -22,14 +22,58 @@ function cats(){return [...$("singleCategoryGrid").querySelectorAll("input:check
 function setCats(a){const z=new Set(a);$("singleCategoryGrid").querySelectorAll("input").forEach(x=>x.checked=z.has(x.value));summary()}
 function summary(){$("singleCategorySummary").textContent=cats().length?`${cats().length} kategori aktif`:"Tidak ada kategori"}
 function updateImp(){const m=maxImp(st.players.length);st.imp=Math.max(1,Math.min(st.imp,m));$("singleImp").textContent=st.imp;$("singleImpHelp").textContent=`${st.imp} impostor dari ${st.players.length} pemain`;$("singleMinus").disabled=st.imp<=1;$("singlePlus").disabled=st.imp>=m}
+function syncSettings(){
+  $("singleKnowsYes").classList.toggle("active",st.knows);
+  $("singleKnowsNo").classList.toggle("active",!st.knows);
+  $("singleShowCatYes").classList.toggle("active",st.showCat);
+  $("singleShowCatNo").classList.toggle("active",!st.showCat);
+  $("singleClueCount").textContent=st.clueCount;
+  $("singleMinusClue").disabled=st.clueCount<=1;
+  $("singlePlusClue").disabled=st.clueCount>=3;
+}
 function render(){$("singlePlayers").innerHTML=st.players.map((p,i)=>`<div class="player-row"><div class="player-left"><div class="avatar">${esc(p.name[0].toUpperCase())}</div><div><div class="player-name">${esc(p.name)}</div><div class="you">${p.score||0} poin</div></div></div><button class="remove-single" data-i="${i}">Hapus</button></div>`).join("");$("singlePlayers").querySelectorAll(".remove-single").forEach(b=>b.onclick=()=>{st.players.splice(+b.dataset.i,1);render();save()});updateImp()}
-function pickWord(){const p=words.filter(x=>st.cats.includes(x.c));return p[Math.floor(Math.random()*p.length)]}
+function pickWord(){
+  let p=words.filter(x=>st.cats.includes(x.c)&&x.w!==st.lastWord);
+  if(!p.length)p=words.filter(x=>st.cats.includes(x.c));
+  return p[Math.floor(Math.random()*p.length)]
+}
 function scoreRows(){return st.players.map(p=>({name:p.name,score:p.score||0})).sort((a,b)=>b.score-a.score)}
 function drawScore(t){t.innerHTML=scoreRows().map((p,i)=>`<div class="score-row"><div class="score-left"><span class="rank">${i+1}</span><span class="score-name">${esc(p.name)}</span></div><span class="score-points">${p.score} poin</span></div>`).join("")}
 
-function start(){st.cats=cats();$("singleMsg").textContent="";if(st.players.length<3){$("singleMsg").textContent="Minimal 3 pemain.";return}if(!st.cats.length){$("singleMsg").textContent="Pilih minimal 1 kategori.";return}st.word=pickWord();const idx=[...st.players.keys()].sort(()=>Math.random()-.5),imps=new Set(idx.slice(0,st.imp));st.roles=st.players.map((p,i)=>({name:p.name,role:imps.has(i)?"impostor":"civilian",clue:[...st.word.q].sort(()=>Math.random()-.5).slice(0,2),alive:true}));st.roleI=0;st.voteI=0;st.votes={};st.matchOver=false;st.revealed=false;save();pass()}
+function start(){st.cats=cats();$("singleMsg").textContent="";if(st.players.length<3){$("singleMsg").textContent="Minimal 3 pemain.";return}if(!st.cats.length){$("singleMsg").textContent="Pilih minimal 1 kategori.";return}st.word=pickWord();st.lastWord=st.word?.w||st.lastWord;const idx=[...st.players.keys()].sort(()=>Math.random()-.5),imps=new Set(idx.slice(0,st.imp));st.roles=st.players.map((p,i)=>({name:p.name,role:imps.has(i)?"impostor":"civilian",clue:[...st.word.q].sort(()=>Math.random()-.5).slice(0,st.clueCount),alive:true}));st.roleI=0;st.voteI=0;st.votes={};st.matchOver=false;st.revealed=false;save();pass()}
 function pass(){$("passName").textContent=st.roles[st.roleI].name;show("singlePass")}
-function openRole(){const r=st.roles[st.roleI];$("rolePlayer").textContent=r.name;$("localRoleCard").classList.toggle("impostor",r.role==="impostor");$("localRoleName").textContent=r.role==="impostor"?"IMPOSTOR":"Warga";$("localCategory").textContent=st.word.c;$("localSecretLabel").textContent=r.role==="impostor"?"CLUE":"KATA RAHASIA";$("localSecret").textContent=r.role==="impostor"?r.clue.join(" • "):st.word.w;$("localDesc").textContent=r.role==="impostor"?"Kamu adalah Impostor. Kamu tidak tahu kata rahasianya.":"Fokus pada kata rahasia di atas. Jangan sebut katanya secara langsung.";show("singleRole")}
+function openRole(){
+  const r=st.roles[st.roleI];
+  $("rolePlayer").textContent=r.name;
+  const hidden=!st.knows;
+  $("localRoleCard").classList.toggle("impostor",r.role==="impostor"&&!hidden);
+  $("localRoleCard").classList.toggle("neutral-role",hidden);
+
+  if(hidden){
+    $("localRoleLabel").textContent="IDENTITAS";
+    $("localRoleName").textContent="Tidak Ditampilkan";
+    $("localSecretLabel").textContent="KATA / PETUNJUKMU";
+    $("localSecret").textContent=r.role==="impostor"?r.clue.join(" • "):st.word.w;
+    $("localDesc").textContent="Identitas role sengaja disembunyikan. Gunakan informasi di atas saat berdiskusi.";
+  }else if(r.role==="impostor"){
+    $("localRoleLabel").textContent="PERANMU";
+    $("localRoleName").textContent="IMPOSTOR";
+    $("localSecretLabel").textContent="CLUE";
+    $("localSecret").textContent=r.clue.join(" • ");
+    $("localDesc").textContent="Kamu adalah Impostor. Kamu tidak tahu kata rahasianya.";
+  }else{
+    $("localRoleLabel").textContent="PERANMU";
+    $("localRoleName").textContent="Warga";
+    $("localSecretLabel").textContent="KATA RAHASIA";
+    $("localSecret").textContent=st.word.w;
+    $("localDesc").textContent="Fokus pada kata rahasia di atas. Jangan sebut katanya secara langsung.";
+  }
+
+  const showCat=r.role!=="impostor"||st.showCat;
+  $("localCategoryWrap").classList.toggle("hidden",!showCat);
+  $("localCategory").textContent=showCat?st.word.c:"";
+  show("singleRole")
+}
 function hideRole(){st.roleI++;save();if(st.roleI>=st.roles.length)show("singleDiscuss");else pass()}
 
 function beginVote(){st.voteI=0;st.votes={};while(st.voteI<st.roles.length&&!st.roles[st.voteI].alive)st.voteI++;save();votePass()}
@@ -46,11 +90,18 @@ function finish(){$("localPodium").innerHTML=scoreRows().map((p,i)=>`<div class=
 
 $("addPlayer").onclick=()=>{const n=$("singleName").value.trim().replace(/\s+/g," ").slice(0,20);if(!n||st.players.some(p=>p.name.toLowerCase()===n.toLowerCase()))return;st.players.push({name:n,score:0});$("singleName").value="";render();save()};
 $("singleMinus").onclick=()=>{if(st.imp>1)st.imp--;updateImp();save()};$("singlePlus").onclick=()=>{st.imp++;updateImp();save()};
+$("singleKnowsYes").onclick=()=>{st.knows=true;syncSettings();save()};
+$("singleKnowsNo").onclick=()=>{st.knows=false;syncSettings();save()};
+$("singleShowCatYes").onclick=()=>{st.showCat=true;syncSettings();save()};
+$("singleShowCatNo").onclick=()=>{st.showCat=false;syncSettings();save()};
+$("singleMinusClue").onclick=()=>{st.clueCount=Math.max(1,st.clueCount-1);syncSettings();save()};
+$("singlePlusClue").onclick=()=>{st.clueCount=Math.min(3,st.clueCount+1);syncSettings();save()};
+syncSettings();
 $("singleStart").onclick=start;$("openRole").onclick=openRole;$("hideRole").onclick=hideRole;$("beginLocalVote").onclick=beginVote;$("beginRealLifeVote").onclick=realLife;$("revealRealLife").onclick=reveal;$("realLifeCivilianWin").onclick=()=>realFinish("civilian");$("realLifeImpostorWin").onclick=()=>realFinish("impostor");$("openLocalVote").onclick=openVote;$("saveLocalVote").onclick=saveVote;$("localAgain").onclick=again;$("localFinish").onclick=finish;
 $("singleSelectAll").onclick=()=>{st.cats=[...ALL];setCats(st.cats);save()};$("singleClearAll").onclick=()=>{st.cats=[];setCats([]);save()};$("singleCategoryGrid").querySelectorAll("input").forEach(x=>x.onchange=()=>{st.cats=cats();summary();save()});
 $("singleFinishBack").onclick=()=>localStorage.removeItem(STORE);
 
-load();setCats(st.cats?.length?st.cats:ALL);render();
+load();setCats(st.cats?.length?st.cats:ALL);render();syncSettings();
 if(st.phase==="singlePass"&&st.roles.length)pass();
 else if(st.phase==="singleRole"&&st.roles.length)openRole();
 else if(st.phase==="singleDiscuss"&&st.roles.length)show("singleDiscuss");

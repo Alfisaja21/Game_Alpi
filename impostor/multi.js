@@ -86,6 +86,9 @@ let currentPlayerToken = null;
 let currentPlayerName = null;
 let currentIsHost = false;
 let impostorCount = 1;
+let impostorKnows = true;
+let clueCount = 2;
+let showCategoryToImpostor = true;
 let selectedVoteId = null;
 let roomChannel = null;
 let playerChannel = null;
@@ -146,6 +149,19 @@ function saveSession() {
 
 function clearSession() {
   localStorage.removeItem(STORAGE_KEY);
+}
+
+
+function setSegmentPair(yesId,noId,value){
+  $(yesId).classList.toggle("active",!!value);
+  $(noId).classList.toggle("active",!value);
+}
+function syncRoomSettingsUI(){
+  setSegmentPair("knowsYesBtn","knowsNoBtn",impostorKnows);
+  setSegmentPair("showCatYesBtn","showCatNoBtn",showCategoryToImpostor);
+  $("clueCountDisplay").textContent=clueCount;
+  $("minusClueBtn").disabled=clueCount<=1;
+  $("plusClueBtn").disabled=clueCount>=3;
 }
 
 function maxImpostors(playerTotal) {
@@ -233,7 +249,7 @@ async function loadRoom() {
 
   const { data } = await db
     .from("rooms")
-    .select("room_code,game_phase,impostor_count,round_no,selected_category,selected_categories")
+    .select("room_code,game_phase,impostor_count,round_no,selected_category,selected_categories,impostor_knows,impostor_clue_count,show_category_to_impostor")
     .eq("room_code", currentRoomCode)
     .maybeSingle();
 
@@ -348,20 +364,35 @@ async function loadMyRole() {
   }
 
   const role = data[0];
-  roleCard.classList.toggle("impostor", role.role === "impostor");
-  roleCategory.textContent = role.category || "-";
+  const hiddenIdentity = role.impostor_knows === false;
+  roleCard.classList.toggle("impostor", role.role === "impostor" && !hiddenIdentity);
+  roleCard.classList.toggle("neutral-role", hiddenIdentity);
 
-  if (role.role === "impostor") {
+  if (hiddenIdentity) {
+    $("roleLabel").textContent = "IDENTITAS";
+    roleName.textContent = "Tidak Ditampilkan";
+    secretLabel.textContent = "KATA / PETUNJUKMU";
+    secretValue.textContent = role.role === "impostor"
+      ? (role.clues || []).join(" • ")
+      : role.secret_word;
+    roleDescription.textContent = "Identitas role sengaja disembunyikan. Gunakan informasi di atas saat berdiskusi.";
+  } else if (role.role === "impostor") {
+    $("roleLabel").textContent = "PERANMU";
     roleName.textContent = "IMPOSTOR";
     secretLabel.textContent = "CLUE";
     secretValue.textContent = (role.clues || []).join(" • ");
-    roleDescription.textContent = "Kamu adalah Impostor. Kamu tidak tahu kata rahasianya. Gunakan kategori dan clue ini untuk menyamar.";
+    roleDescription.textContent = "Kamu adalah Impostor. Kamu tidak mengetahui kata rahasia.";
   } else {
-    roleName.textContent = "WARGA";
+    $("roleLabel").textContent = "PERANMU";
+    roleName.textContent = "Warga";
     secretLabel.textContent = "KATA RAHASIA";
     secretValue.textContent = role.secret_word;
-    roleDescription.textContent = "Berikan petunjuk yang berkaitan dengan kata ini, tetapi jangan menyebut katanya secara langsung.";
+    roleDescription.textContent = "Fokus pada kata rahasia di atas. Jangan menyebutnya secara langsung.";
   }
+
+  const showCategory = role.role !== "impostor" || role.show_category_to_impostor !== false;
+  $("roleCategoryWrap").classList.toggle("hidden", !showCategory);
+  roleCategory.textContent = showCategory ? (role.category || "-") : "";
 }
 
 async function loadHistory() {
@@ -516,6 +547,10 @@ async function enterRoom() {
   if (currentIsHost) {
     const cats = Array.isArray(room.selected_categories) && room.selected_categories.length ? room.selected_categories : ALL_CATEGORIES;
     setSelectedCategories(cats);
+    impostorKnows = room.impostor_knows !== false;
+    clueCount = Math.max(1, Math.min(3, Number(room.impostor_clue_count || 2)));
+    showCategoryToImpostor = room.show_category_to_impostor !== false;
+    syncRoomSettingsUI();
   }
 
   await showPhase(room.game_phase || "lobby");
@@ -601,7 +636,10 @@ async function startGame() {
     p_player_id: currentPlayerId,
     p_player_token: currentPlayerToken,
     p_impostor_count: impostorCount,
-    p_categories: cats
+    p_categories: cats,
+    p_impostor_knows: impostorKnows,
+    p_clue_count: clueCount,
+    p_show_category_to_impostor: showCategoryToImpostor
   });
 
   if (error) {
@@ -748,7 +786,7 @@ async function boot() {
   await db.rpc("impostor_cleanup_rooms");
   const { error } = await db
     .from("rooms")
-    .select("room_code,game_phase,selected_category,selected_categories")
+    .select("room_code,game_phase,selected_category,selected_categories,impostor_knows,impostor_clue_count,show_category_to_impostor")
     .limit(1);
 
   if (error) {
@@ -783,6 +821,14 @@ $("selectAllCategoriesBtn").addEventListener("click", () => setSelectedCategorie
 $("clearAllCategoriesBtn").addEventListener("click", () => setSelectedCategories([]));
 document.querySelectorAll('#categoryGrid input[type="checkbox"]').forEach(x => x.addEventListener("change", updateCategorySummary));
 updateCategorySummary();
+
+$("knowsYesBtn").addEventListener("click",()=>{impostorKnows=true;syncRoomSettingsUI();});
+$("knowsNoBtn").addEventListener("click",()=>{impostorKnows=false;syncRoomSettingsUI();});
+$("showCatYesBtn").addEventListener("click",()=>{showCategoryToImpostor=true;syncRoomSettingsUI();});
+$("showCatNoBtn").addEventListener("click",()=>{showCategoryToImpostor=false;syncRoomSettingsUI();});
+$("minusClueBtn").addEventListener("click",()=>{clueCount=Math.max(1,clueCount-1);syncRoomSettingsUI();});
+$("plusClueBtn").addEventListener("click",()=>{clueCount=Math.min(3,clueCount+1);syncRoomSettingsUI();});
+syncRoomSettingsUI();
 
 createRoomBtn.addEventListener("click", createRoom);
 joinRoomBtn.addEventListener("click", joinRoom);

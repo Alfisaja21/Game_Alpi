@@ -96,3 +96,15 @@
 .single-vote-choice{display:grid;gap:10px}.confirm-box{margin:20px 0;padding:16px;border:1px solid rgba(248,113,113,.20);border-radius:15px;background:rgba(127,29,29,.10)}
 .confirm-box strong{display:block;margin-bottom:5px;color:#fecaca}.confirm-box p{margin:0;color:#94a3b8;font-size:12px;line-height:1.55}.real-life-winner-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 @media(max-width:520px){.category-head{flex-direction:column}.category-actions{justify-content:flex-start}.category-grid,.real-life-winner-grid{grid-template-columns:1fr}}
+
+/* V10 room settings */
+.game-settings-grid{display:grid;gap:10px;margin-top:14px}
+.setting-box{padding:13px;border:1px solid rgba(148,163,184,.11);border-radius:14px;background:#111c2d}
+.setting-help{margin:7px 0 0;color:#64748b;font-size:10px;line-height:1.45}
+.segmented{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.segment{padding:9px 8px;border:1px solid rgba(148,163,184,.12);border-radius:10px;color:#94a3b8;background:#0d1728;cursor:pointer;font-size:11px;font-weight:850}
+.segment.active{color:#dbeafe;border-color:rgba(96,165,250,.45);background:rgba(37,99,235,.16)}
+.setting-stepper{margin-top:8px;justify-content:flex-start}
+.role-card.neutral-role{border-color:rgba(148,163,184,.18);background:linear-gradient(135deg,rgba(30,41,59,.3),rgba(37,99,235,.05)),#0b1423}
+.role-card.neutral-role .role-name-compact{font-size:clamp(20px,5vw,28px)!important;color:#cbd5e1}
+@media(min-width:720px){.game-settings-grid{grid-template-columns:1.35fr .75fr 1fr}}

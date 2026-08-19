@@ -18,12 +18,17 @@
 <label class="category-option"><input type="checkbox" value="Olahraga" checked><span>⚽ Olahraga</span></label>
 </div></div>
 
+<div class="game-settings-grid single-space">
+<div class="setting-box"><span class="label-small">IDENTITAS IMPOSTOR</span><div class="segmented"><button id="singleKnowsYes" class="segment active" type="button">Diberi Tahu</button><button id="singleKnowsNo" class="segment" type="button">Tidak Diberi Tahu</button></div></div>
+<div class="setting-box"><span class="label-small">JUMLAH CLUE IMPOSTOR</span><div class="stepper setting-stepper"><button id="singleMinusClue" type="button">−</button><strong id="singleClueCount">2</strong><button id="singlePlusClue" type="button">＋</button></div></div>
+<div class="setting-box"><span class="label-small">KATEGORI UNTUK IMPOSTOR</span><div class="segmented"><button id="singleShowCatYes" class="segment active" type="button">Tampilkan</button><button id="singleShowCatNo" class="segment" type="button">Sembunyikan</button></div></div>
+</div>
 <div class="control-head impostor-control"><div><span class="label-small">JUMLAH IMPOSTOR</span><strong id="singleImpHelp">1 impostor</strong></div><div class="stepper"><button id="singleMinus">−</button><strong id="singleImp">1</strong><button id="singlePlus">＋</button></div></div>
 <button id="singleStart" class="start-btn">Mulai Game</button><p id="singleMsg" class="form-message"></p></section>
 
 <section id="singlePass" class="hidden"><p class="eyebrow">OPER HP</p><h1>Berikan HP ke</h1><div class="pass-card"><div class="pulse-ring">📱</div><strong id="passName">...</strong><p>Pastikan pemain lain tidak melihat.</p></div><button id="openRole" class="primary-btn">Saya Siap Melihat Role</button></section>
 
-<section id="singleRole" class="hidden"><p class="eyebrow">ROLE RAHASIA</p><h1 id="rolePlayer">...</h1><div id="localRoleCard" class="role-card"><span class="role-label">PERANMU</span><h2 id="localRoleName" class="role-name-compact">...</h2><div class="category-pill">Kategori: <strong id="localCategory">...</strong></div><div class="secret-box"><span id="localSecretLabel">KATA RAHASIA</span><strong id="localSecret">...</strong></div><p id="localDesc"></p></div><button id="hideRole" class="primary-btn">Sembunyikan & Oper HP</button></section>
+<section id="singleRole" class="hidden"><p class="eyebrow">ROLE RAHASIA</p><h1 id="rolePlayer">...</h1><div id="localRoleCard" class="role-card"><span id="localRoleLabel" class="role-label">PERANMU</span><h2 id="localRoleName" class="role-name-compact">...</h2><div id="localCategoryWrap" class="category-pill">Kategori: <strong id="localCategory">...</strong></div><div class="secret-box"><span id="localSecretLabel">KATA RAHASIA</span><strong id="localSecret">...</strong></div><p id="localDesc"></p></div><button id="hideRole" class="primary-btn">Sembunyikan & Oper HP</button></section>
 
 <section id="singleDiscuss" class="hidden"><p class="eyebrow">DISKUSI</p><h1>Semua Sudah Siap</h1><div class="discussion-box"><div class="pulse-ring">💬</div><h2>Mulai berdiskusi</h2><p>Setelah diskusi, pilih metode voting.</p></div><div class="single-vote-choice"><button id="beginLocalVote" class="start-btn">Voting di HP</button><button id="beginRealLifeVote" class="secondary-btn">Voting Langsung / Real Life</button></div></section>
 

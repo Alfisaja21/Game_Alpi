@@ -79,6 +79,34 @@
             </div>
           </div>
 
+          <div class="game-settings-grid">
+            <div class="setting-box">
+              <span class="label-small">IDENTITAS IMPOSTOR</span>
+              <div class="segmented">
+                <button id="knowsYesBtn" class="segment active" type="button">Diberi Tahu</button>
+                <button id="knowsNoBtn" class="segment" type="button">Tidak Diberi Tahu</button>
+              </div>
+              <p class="setting-help">Jika disembunyikan, semua pemain melihat tampilan role yang netral.</p>
+            </div>
+
+            <div class="setting-box">
+              <span class="label-small">JUMLAH CLUE IMPOSTOR</span>
+              <div class="stepper setting-stepper">
+                <button id="minusClueBtn" type="button">−</button>
+                <strong id="clueCountDisplay">2</strong>
+                <button id="plusClueBtn" type="button">＋</button>
+              </div>
+            </div>
+
+            <div class="setting-box">
+              <span class="label-small">KATEGORI UNTUK IMPOSTOR</span>
+              <div class="segmented">
+                <button id="showCatYesBtn" class="segment active" type="button">Tampilkan</button>
+                <button id="showCatNoBtn" class="segment" type="button">Sembunyikan</button>
+              </div>
+            </div>
+          </div>
+
           <div class="control-head impostor-control">
             <div>
               <span class="label-small">JUMLAH IMPOSTOR</span>
@@ -113,10 +141,10 @@
         <p class="subtitle">Pastikan hanya kamu yang melihat layar ini.</p>
 
         <div id="roleCard" class="role-card">
-          <span class="role-label">PERANMU</span>
+          <span id="roleLabel" class="role-label">PERANMU</span>
           <h2 id="roleName" class="role-name-compact">...</h2>
 
-          <div class="category-pill">
+          <div id="roleCategoryWrap" class="category-pill">
             Kategori: <strong id="roleCategory">...</strong>
           </div>
 
