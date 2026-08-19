@@ -157,11 +157,19 @@ function setSegmentPair(yesId,noId,value){
   $(noId).classList.toggle("active",!value);
 }
 function syncRoomSettingsUI(){
+  if (!impostorKnows) clueCount = 1;
+
   setSegmentPair("knowsYesBtn","knowsNoBtn",impostorKnows);
   setSegmentPair("showCatYesBtn","showCatNoBtn",showCategoryToImpostor);
+
   $("clueCountDisplay").textContent=clueCount;
-  $("minusClueBtn").disabled=clueCount<=1;
-  $("plusClueBtn").disabled=clueCount>=3;
+
+  const clueLocked = !impostorKnows;
+  $("minusClueBtn").disabled = clueLocked || clueCount <= 1;
+  $("plusClueBtn").disabled = clueLocked || clueCount >= 3;
+
+  const clueBox = $("clueCountDisplay")?.closest(".setting-box");
+  if (clueBox) clueBox.classList.toggle("setting-locked", clueLocked);
 }
 
 function maxImpostors(playerTotal) {
@@ -822,8 +830,16 @@ $("clearAllCategoriesBtn").addEventListener("click", () => setSelectedCategories
 document.querySelectorAll('#categoryGrid input[type="checkbox"]').forEach(x => x.addEventListener("change", updateCategorySummary));
 updateCategorySummary();
 
-$("knowsYesBtn").addEventListener("click",()=>{impostorKnows=true;syncRoomSettingsUI();});
-$("knowsNoBtn").addEventListener("click",()=>{impostorKnows=false;syncRoomSettingsUI();});
+$("knowsYesBtn").addEventListener("click",()=>{
+  impostorKnows=true;
+  if (clueCount < 1) clueCount = 1;
+  syncRoomSettingsUI();
+});
+$("knowsNoBtn").addEventListener("click",()=>{
+  impostorKnows=false;
+  clueCount=1;
+  syncRoomSettingsUI();
+});
 $("showCatYesBtn").addEventListener("click",()=>{showCategoryToImpostor=true;syncRoomSettingsUI();});
 $("showCatNoBtn").addEventListener("click",()=>{showCategoryToImpostor=false;syncRoomSettingsUI();});
 $("minusClueBtn").addEventListener("click",()=>{clueCount=Math.max(1,clueCount-1);syncRoomSettingsUI();});

@@ -23,13 +23,21 @@ function setCats(a){const z=new Set(a);$("singleCategoryGrid").querySelectorAll(
 function summary(){$("singleCategorySummary").textContent=cats().length?`${cats().length} kategori aktif`:"Tidak ada kategori"}
 function updateImp(){const m=maxImp(st.players.length);st.imp=Math.max(1,Math.min(st.imp,m));$("singleImp").textContent=st.imp;$("singleImpHelp").textContent=`${st.imp} impostor dari ${st.players.length} pemain`;$("singleMinus").disabled=st.imp<=1;$("singlePlus").disabled=st.imp>=m}
 function syncSettings(){
+  if(!st.knows) st.clueCount=1;
+
   $("singleKnowsYes").classList.toggle("active",st.knows);
   $("singleKnowsNo").classList.toggle("active",!st.knows);
   $("singleShowCatYes").classList.toggle("active",st.showCat);
   $("singleShowCatNo").classList.toggle("active",!st.showCat);
+
   $("singleClueCount").textContent=st.clueCount;
-  $("singleMinusClue").disabled=st.clueCount<=1;
-  $("singlePlusClue").disabled=st.clueCount>=3;
+
+  const clueLocked=!st.knows;
+  $("singleMinusClue").disabled=clueLocked||st.clueCount<=1;
+  $("singlePlusClue").disabled=clueLocked||st.clueCount>=3;
+
+  const clueBox=$("singleClueCount")?.closest(".setting-box");
+  if(clueBox) clueBox.classList.toggle("setting-locked",clueLocked);
 }
 function render(){$("singlePlayers").innerHTML=st.players.map((p,i)=>`<div class="player-row"><div class="player-left"><div class="avatar">${esc(p.name[0].toUpperCase())}</div><div><div class="player-name">${esc(p.name)}</div><div class="you">${p.score||0} poin</div></div></div><button class="remove-single" data-i="${i}">Hapus</button></div>`).join("");$("singlePlayers").querySelectorAll(".remove-single").forEach(b=>b.onclick=()=>{st.players.splice(+b.dataset.i,1);render();save()});updateImp()}
 function pickWord(){
@@ -91,7 +99,7 @@ function finish(){$("localPodium").innerHTML=scoreRows().map((p,i)=>`<div class=
 $("addPlayer").onclick=()=>{const n=$("singleName").value.trim().replace(/\s+/g," ").slice(0,20);if(!n||st.players.some(p=>p.name.toLowerCase()===n.toLowerCase()))return;st.players.push({name:n,score:0});$("singleName").value="";render();save()};
 $("singleMinus").onclick=()=>{if(st.imp>1)st.imp--;updateImp();save()};$("singlePlus").onclick=()=>{st.imp++;updateImp();save()};
 $("singleKnowsYes").onclick=()=>{st.knows=true;syncSettings();save()};
-$("singleKnowsNo").onclick=()=>{st.knows=false;syncSettings();save()};
+$("singleKnowsNo").onclick=()=>{st.knows=false;st.clueCount=1;syncSettings();save()};
 $("singleShowCatYes").onclick=()=>{st.showCat=true;syncSettings();save()};
 $("singleShowCatNo").onclick=()=>{st.showCat=false;syncSettings();save()};
 $("singleMinusClue").onclick=()=>{st.clueCount=Math.max(1,st.clueCount-1);syncSettings();save()};
