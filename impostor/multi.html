@@ -56,18 +56,28 @@
         <div id="playersList" class="players-list"></div>
 
         <div id="hostControls" class="host-controls hidden">
-          <label class="label">Kategori kata</label>
-          <select id="categorySelect" class="text-input category-select">
-            <option value="Random">🎲 Random</option>
-            <option value="Hewan">🐾 Hewan</option>
-            <option value="Benda">📦 Benda</option>
-            <option value="Tempat">📍 Tempat</option>
-            <option value="Makanan">🍜 Makanan</option>
-            <option value="Buah">🍉 Buah</option>
-            <option value="Kendaraan">🚗 Kendaraan</option>
-            <option value="Pekerjaan">💼 Pekerjaan</option>
-            <option value="Olahraga">⚽ Olahraga</option>
-          </select>
+          <div class="category-section">
+            <div class="category-head">
+              <div>
+                <span class="label-small">KATEGORI YANG DIMAINKAN</span>
+                <strong id="categorySummary">8 kategori aktif</strong>
+              </div>
+              <div class="category-actions">
+                <button id="selectAllCategoriesBtn" class="tiny-btn" type="button">Pilih Semua</button>
+                <button id="clearAllCategoriesBtn" class="tiny-btn" type="button">Hapus Semua</button>
+              </div>
+            </div>
+            <div id="categoryGrid" class="category-grid">
+              <label class="category-option"><input type="checkbox" value="Hewan" checked><span>🐾 Hewan</span></label>
+              <label class="category-option"><input type="checkbox" value="Benda" checked><span>📦 Benda</span></label>
+              <label class="category-option"><input type="checkbox" value="Tempat" checked><span>📍 Tempat</span></label>
+              <label class="category-option"><input type="checkbox" value="Makanan" checked><span>🍜 Makanan</span></label>
+              <label class="category-option"><input type="checkbox" value="Buah" checked><span>🍉 Buah</span></label>
+              <label class="category-option"><input type="checkbox" value="Kendaraan" checked><span>🚗 Kendaraan</span></label>
+              <label class="category-option"><input type="checkbox" value="Pekerjaan" checked><span>💼 Pekerjaan</span></label>
+              <label class="category-option"><input type="checkbox" value="Olahraga" checked><span>⚽ Olahraga</span></label>
+            </div>
+          </div>
 
           <div class="control-head impostor-control">
             <div>
@@ -104,7 +114,7 @@
 
         <div id="roleCard" class="role-card">
           <span class="role-label">PERANMU</span>
-          <h2 id="roleName">...</h2>
+          <h2 id="roleName" class="role-name-compact">...</h2>
 
           <div class="category-pill">
             Kategori: <strong id="roleCategory">...</strong>

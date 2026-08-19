@@ -30,7 +30,6 @@ const playerCount = $("playerCount");
 const playersList = $("playersList");
 const hostBadge = $("hostBadge");
 const hostControls = $("hostControls");
-const categorySelect = $("categorySelect");
 const minusImpostorBtn = $("minusImpostorBtn");
 const plusImpostorBtn = $("plusImpostorBtn");
 const impostorCountDisplay = $("impostorCountDisplay");
@@ -109,6 +108,21 @@ function normalizeName(v) {
 
 function normalizeCode(v) {
   return v.replace(/\D/g, "").slice(0, 6);
+}
+
+const ALL_CATEGORIES = ["Hewan","Benda","Tempat","Makanan","Buah","Kendaraan","Pekerjaan","Olahraga"];
+
+function selectedCategories() {
+  return [...document.querySelectorAll('#categoryGrid input[type="checkbox"]:checked')].map(x => x.value);
+}
+function setSelectedCategories(values) {
+  const set = new Set(values || []);
+  document.querySelectorAll('#categoryGrid input[type="checkbox"]').forEach(x => x.checked = set.has(x.value));
+  updateCategorySummary();
+}
+function updateCategorySummary() {
+  const n = selectedCategories().length;
+  $("categorySummary").textContent = n ? `${n} kategori aktif` : "Tidak ada kategori";
 }
 
 function escapeHtml(v) {
@@ -219,7 +233,7 @@ async function loadRoom() {
 
   const { data } = await db
     .from("rooms")
-    .select("room_code,game_phase,impostor_count,round_no,selected_category")
+    .select("room_code,game_phase,impostor_count,round_no,selected_category,selected_categories")
     .eq("room_code", currentRoomCode)
     .maybeSingle();
 
@@ -499,8 +513,9 @@ async function enterRoom() {
     return;
   }
 
-  if (currentIsHost && room.selected_category) {
-    categorySelect.value = room.selected_category;
+  if (currentIsHost) {
+    const cats = Array.isArray(room.selected_categories) && room.selected_categories.length ? room.selected_categories : ALL_CATEGORIES;
+    setSelectedCategories(cats);
   }
 
   await showPhase(room.game_phase || "lobby");
@@ -573,6 +588,11 @@ async function joinRoom() {
 }
 
 async function startGame() {
+  const cats = selectedCategories();
+  if (!cats.length) {
+    lobbyMessage.textContent = "Pilih minimal 1 kategori.";
+    return;
+  }
   startGameBtn.disabled = true;
   lobbyMessage.textContent = "";
 
@@ -581,7 +601,7 @@ async function startGame() {
     p_player_id: currentPlayerId,
     p_player_token: currentPlayerToken,
     p_impostor_count: impostorCount,
-    p_category: categorySelect.value
+    p_categories: cats
   });
 
   if (error) {
@@ -728,7 +748,7 @@ async function boot() {
   await db.rpc("impostor_cleanup_rooms");
   const { error } = await db
     .from("rooms")
-    .select("room_code,game_phase,selected_category")
+    .select("room_code,game_phase,selected_category,selected_categories")
     .limit(1);
 
   if (error) {
@@ -758,6 +778,11 @@ refreshScoreBtn.addEventListener("click", () => loadScoreboard(lobbyScoreboard))
 roomCodeInput.addEventListener("input", () => {
   roomCodeInput.value = normalizeCode(roomCodeInput.value);
 });
+
+$("selectAllCategoriesBtn").addEventListener("click", () => setSelectedCategories(ALL_CATEGORIES));
+$("clearAllCategoriesBtn").addEventListener("click", () => setSelectedCategories([]));
+document.querySelectorAll('#categoryGrid input[type="checkbox"]').forEach(x => x.addEventListener("change", updateCategorySummary));
+updateCategorySummary();
 
 createRoomBtn.addEventListener("click", createRoom);
 joinRoomBtn.addEventListener("click", joinRoom);
