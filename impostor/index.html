@@ -56,7 +56,20 @@
         <div id="playersList" class="players-list"></div>
 
         <div id="hostControls" class="host-controls hidden">
-          <div class="control-head">
+          <label class="label">Kategori kata</label>
+          <select id="categorySelect" class="text-input category-select">
+            <option value="Random">🎲 Random</option>
+            <option value="Hewan">🐾 Hewan</option>
+            <option value="Benda">📦 Benda</option>
+            <option value="Tempat">📍 Tempat</option>
+            <option value="Makanan">🍜 Makanan</option>
+            <option value="Buah">🍉 Buah</option>
+            <option value="Kendaraan">🚗 Kendaraan</option>
+            <option value="Pekerjaan">💼 Pekerjaan</option>
+            <option value="Olahraga">⚽ Olahraga</option>
+          </select>
+
+          <div class="control-head impostor-control">
             <div>
               <span class="label-small">JUMLAH IMPOSTOR</span>
               <strong id="impostorHelp">1 impostor</strong>
@@ -67,8 +80,17 @@
               <button id="plusImpostorBtn">＋</button>
             </div>
           </div>
+
           <button id="startGameBtn" class="start-btn">Mulai Game</button>
           <p class="host-hint">Minimal 3 pemain.</p>
+        </div>
+
+        <div class="score-preview">
+          <div class="score-preview-head">
+            <span class="label-small">KLASEMEN ROOM</span>
+            <button id="refreshScoreBtn" class="tiny-btn">Refresh</button>
+          </div>
+          <div id="lobbyScoreboard" class="mini-scoreboard"></div>
         </div>
 
         <p id="lobbyMessage" class="form-message"></p>
@@ -83,10 +105,16 @@
         <div id="roleCard" class="role-card">
           <span class="role-label">PERANMU</span>
           <h2 id="roleName">...</h2>
+
+          <div class="category-pill">
+            Kategori: <strong id="roleCategory">...</strong>
+          </div>
+
           <div class="secret-box">
             <span id="secretLabel">KATA RAHASIA</span>
             <strong id="secretValue">...</strong>
           </div>
+
           <p id="roleDescription"></p>
         </div>
 
@@ -155,8 +183,16 @@
             <strong id="resultSecretWord">...</strong>
           </div>
           <div class="result-info">
+            <span>KATEGORI</span>
+            <strong id="resultCategory">...</strong>
+          </div>
+          <div class="result-info">
             <span>IMPOSTOR</span>
             <strong id="resultImpostors">...</strong>
+          </div>
+          <div class="result-info">
+            <span>RONDE</span>
+            <strong id="resultRound">...</strong>
           </div>
         </div>
 
@@ -164,6 +200,16 @@
           <span class="label-small">HASIL SUARA</span>
           <div id="voteTotals"></div>
         </div>
+
+        <div class="score-section">
+          <span class="label-small">KLASEMEN</span>
+          <div id="resultScoreboard" class="scoreboard"></div>
+        </div>
+
+        <details class="history-section">
+          <summary>Riwayat Pertandingan</summary>
+          <div id="historyList" class="history-list"></div>
+        </details>
 
         <button id="playAgainBtn" class="primary-btn hidden">Main Lagi</button>
         <p id="resultHostHint" class="host-hint">Tunggu host memulai ronde berikutnya.</p>

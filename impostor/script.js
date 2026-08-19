@@ -20,15 +20,16 @@ const roomCodeInput = $("roomCodeInput");
 const createRoomBtn = $("createRoomBtn");
 const joinRoomBtn = $("joinRoomBtn");
 const setupMessage = $("setupMessage");
-
 const connectionBadge = $("connectionBadge");
 const connectionText = $("connectionText");
+
 const roomCodeDisplay = $("roomCodeDisplay");
 const copyCodeBtn = $("copyCodeBtn");
 const playerCount = $("playerCount");
 const playersList = $("playersList");
 const hostBadge = $("hostBadge");
 const hostControls = $("hostControls");
+const categorySelect = $("categorySelect");
 const minusImpostorBtn = $("minusImpostorBtn");
 const plusImpostorBtn = $("plusImpostorBtn");
 const impostorCountDisplay = $("impostorCountDisplay");
@@ -36,9 +37,12 @@ const impostorHelp = $("impostorHelp");
 const startGameBtn = $("startGameBtn");
 const leaveRoomBtn = $("leaveRoomBtn");
 const lobbyMessage = $("lobbyMessage");
+const lobbyScoreboard = $("lobbyScoreboard");
+const refreshScoreBtn = $("refreshScoreBtn");
 
 const roleCard = $("roleCard");
 const roleName = $("roleName");
+const roleCategory = $("roleCategory");
 const secretLabel = $("secretLabel");
 const secretValue = $("secretValue");
 const roleDescription = $("roleDescription");
@@ -62,8 +66,12 @@ const resultSmallLabel = $("resultSmallLabel");
 const eliminatedName = $("eliminatedName");
 const eliminatedDetail = $("eliminatedDetail");
 const resultSecretWord = $("resultSecretWord");
+const resultCategory = $("resultCategory");
 const resultImpostors = $("resultImpostors");
+const resultRound = $("resultRound");
 const voteTotals = $("voteTotals");
+const resultScoreboard = $("resultScoreboard");
+const historyList = $("historyList");
 const playAgainBtn = $("playAgainBtn");
 const resultHostHint = $("resultHostHint");
 const resultMessage = $("resultMessage");
@@ -78,7 +86,7 @@ let selectedVoteId = null;
 let roomChannel = null;
 let playerChannel = null;
 
-const STORAGE_KEY = "gameAlpiImpostorV6";
+const STORAGE_KEY = "gameAlpiImpostorV7";
 
 function hideScreens() {
   Object.values(screens).forEach(el => el.classList.add("hidden"));
@@ -136,12 +144,40 @@ function updateImpostorControls(totalPlayers) {
   startGameBtn.disabled = totalPlayers < 3;
 }
 
+function renderScoreboard(target, rows) {
+  if (!rows?.length) {
+    target.innerHTML = '<div class="you">Belum ada skor.</div>';
+    return;
+  }
+
+  target.innerHTML = rows.map((row, index) => `
+    <div class="score-row">
+      <div class="score-left">
+        <span class="rank">${index + 1}</span>
+        <span class="score-name">${escapeHtml(row.player_name)}</span>
+      </div>
+      <span class="score-points">${row.score} poin</span>
+    </div>
+  `).join("");
+}
+
+async function loadScoreboard(target = lobbyScoreboard) {
+  if (!currentPlayerId || !currentPlayerToken) return;
+
+  const { data, error } = await db.rpc("impostor_get_scoreboard", {
+    p_player_id: currentPlayerId,
+    p_player_token: currentPlayerToken
+  });
+
+  if (!error) renderScoreboard(target, data || []);
+}
+
 async function loadPlayers() {
   if (!currentRoomCode) return [];
 
   const { data, error } = await db
     .from("players")
-    .select("id,player_name,is_host,role_seen,vote_submitted,created_at")
+    .select("id,player_name,is_host,role_seen,vote_submitted,score,created_at")
     .eq("room_code", currentRoomCode)
     .order("created_at", { ascending: true });
 
@@ -155,7 +191,7 @@ async function loadPlayers() {
         <div class="avatar">${escapeHtml((p.player_name || "?")[0].toUpperCase())}</div>
         <div>
           <div class="player-name">${escapeHtml(p.player_name)}</div>
-          ${String(p.id) === String(currentPlayerId) ? '<div class="you">Kamu</div>' : ""}
+          <div class="you">${String(p.id) === String(currentPlayerId) ? "Kamu • " : ""}${p.score || 0} poin</div>
         </div>
       </div>
       ${p.is_host ? '<span class="crown">👑 HOST</span>' : ""}
@@ -177,7 +213,7 @@ async function loadRoom() {
 
   const { data } = await db
     .from("rooms")
-    .select("room_code,game_phase,impostor_count,round_no")
+    .select("room_code,game_phase,impostor_count,round_no,selected_category")
     .eq("room_code", currentRoomCode)
     .maybeSingle();
 
@@ -188,9 +224,12 @@ async function showLobby() {
   hideScreens();
   screens.lobby.classList.remove("hidden");
   roomCodeDisplay.textContent = currentRoomCode;
+
   currentIsHost ? hostBadge.classList.remove("hidden") : hostBadge.classList.add("hidden");
   currentIsHost ? hostControls.classList.remove("hidden") : hostControls.classList.add("hidden");
+
   await loadPlayers();
+  await loadScoreboard(lobbyScoreboard);
 }
 
 async function showRevealOrWaiting() {
@@ -237,6 +276,7 @@ async function showVotingOrWaiting() {
   voteMessage.textContent = "";
 
   const choices = players.filter(p => String(p.id) !== String(currentPlayerId));
+
   voteOptions.innerHTML = choices.map(p => `
     <button class="vote-option" data-player-id="${p.id}">
       <span class="vote-radio"></span>
@@ -287,18 +327,46 @@ async function loadMyRole() {
 
   const role = data[0];
   roleCard.classList.toggle("impostor", role.role === "impostor");
+  roleCategory.textContent = role.category || "-";
 
   if (role.role === "impostor") {
     roleName.textContent = "IMPOSTOR";
-    secretLabel.textContent = "KISI-KISI";
-    secretValue.textContent = role.hint;
-    roleDescription.textContent = "Kamu tidak mengetahui kata rahasia. Gunakan petunjuk pemain lain untuk menebaknya.";
+    secretLabel.textContent = "CLUE";
+    secretValue.textContent = (role.clues || []).join(" • ");
+    roleDescription.textContent = "Kamu adalah Impostor. Kamu tidak tahu kata rahasianya. Gunakan kategori dan clue ini untuk menyamar.";
   } else {
     roleName.textContent = "WARGA";
     secretLabel.textContent = "KATA RAHASIA";
     secretValue.textContent = role.secret_word;
-    roleDescription.textContent = `Kategori: ${role.hint}. Berikan petunjuk tanpa menyebut kata ini secara langsung.`;
+    roleDescription.textContent = "Berikan petunjuk yang berkaitan dengan kata ini, tetapi jangan menyebut katanya secara langsung.";
   }
+}
+
+async function loadHistory() {
+  const { data, error } = await db.rpc("impostor_get_history", {
+    p_player_id: currentPlayerId,
+    p_player_token: currentPlayerToken
+  });
+
+  if (error || !data?.length) {
+    historyList.innerHTML = '<div class="you">Belum ada riwayat.</div>';
+    return;
+  }
+
+  historyList.innerHTML = data.map(row => `
+    <div class="history-card">
+      <div class="history-card-head">
+        <span class="history-round">Ronde ${row.round_no}</span>
+        <span class="history-winner">${row.winner === "civilian" ? "WARGA MENANG" : "IMPOSTOR MENANG"}</span>
+      </div>
+      <div class="history-meta">
+        <div>Kata: <strong>${escapeHtml(row.secret_word || "-")}</strong></div>
+        <div>Kategori: <strong>${escapeHtml(row.category || "-")}</strong></div>
+        <div>Impostor: <strong>${escapeHtml((row.impostors || []).join(", "))}</strong></div>
+        <div>Terpilih: <strong>${escapeHtml(row.eliminated_player_name || "Seri")}</strong></div>
+      </div>
+    </div>
+  `).join("");
 }
 
 async function loadResult() {
@@ -314,29 +382,29 @@ async function loadResult() {
     return;
   }
 
-  const winnerIsCivilian = data.winner === "civilian";
-  winnerTitle.textContent = winnerIsCivilian ? "Warga Menang!" : "Impostor Menang!";
+  const civilianWon = data.winner === "civilian";
+  winnerTitle.textContent = civilianWon ? "Warga Menang!" : "Impostor Menang!";
 
   eliminationCard.classList.remove("win-civilian", "win-impostor");
-  eliminationCard.classList.add(winnerIsCivilian ? "win-civilian" : "win-impostor");
+  eliminationCard.classList.add(civilianWon ? "win-civilian" : "win-impostor");
 
   if (data.tie) {
     resultSmallLabel.textContent = "VOTING SERI";
     eliminatedName.textContent = "Tidak Ada Eliminasi";
-    eliminatedDetail.textContent = "Suara tertinggi seri. Warga gagal mencapai keputusan, sehingga Impostor memenangkan ronde.";
+    eliminatedDetail.textContent = "Suara tertinggi seri. Impostor memenangkan ronde.";
   } else {
     resultSmallLabel.textContent = "PEMAIN TERPILIH";
     eliminatedName.textContent = data.eliminated_player_name || "-";
-
-    if (data.eliminated_role === "impostor") {
-      eliminatedDetail.textContent = `Mendapat ${data.top_votes} suara dan ternyata adalah IMPOSTOR.`;
-    } else {
-      eliminatedDetail.textContent = `Mendapat ${data.top_votes} suara dan ternyata adalah WARGA.`;
-    }
+    eliminatedDetail.textContent =
+      data.eliminated_role === "impostor"
+        ? `Mendapat ${data.top_votes} suara dan ternyata adalah IMPOSTOR.`
+        : `Mendapat ${data.top_votes} suara dan ternyata adalah WARGA.`;
   }
 
   resultSecretWord.textContent = data.secret_word || "-";
+  resultCategory.textContent = data.category || "-";
   resultImpostors.textContent = (data.impostors || []).join(", ") || "-";
+  resultRound.textContent = data.round_no || "-";
 
   voteTotals.innerHTML = (data.vote_totals || []).map(row => `
     <div class="vote-total-row">
@@ -344,6 +412,9 @@ async function loadResult() {
       <span>${row.votes} suara</span>
     </div>
   `).join("");
+
+  await loadScoreboard(resultScoreboard);
+  await loadHistory();
 
   if (currentIsHost) {
     playAgainBtn.classList.remove("hidden");
@@ -359,7 +430,6 @@ async function unsubscribeRealtime() {
     await db.removeChannel(roomChannel);
     roomChannel = null;
   }
-
   if (playerChannel) {
     await db.removeChannel(playerChannel);
     playerChannel = null;
@@ -405,6 +475,9 @@ async function subscribeRealtime() {
       filter: `room_code=eq.${currentRoomCode}`
     }, async () => {
       await loadPlayers();
+      if (!screens.lobby.classList.contains("hidden")) {
+        await loadScoreboard(lobbyScoreboard);
+      }
     })
     .subscribe();
 }
@@ -419,6 +492,10 @@ async function enterRoom() {
     screens.setup.classList.remove("hidden");
     setupMessage.textContent = "Room sudah tidak tersedia.";
     return;
+  }
+
+  if (currentIsHost && room.selected_category) {
+    categorySelect.value = room.selected_category;
   }
 
   await showPhase(room.game_phase || "lobby");
@@ -498,7 +575,8 @@ async function startGame() {
     p_room_code: currentRoomCode,
     p_player_id: currentPlayerId,
     p_player_token: currentPlayerToken,
-    p_impostor_count: impostorCount
+    p_impostor_count: impostorCount,
+    p_category: categorySelect.value
   });
 
   if (error) {
@@ -634,12 +712,12 @@ async function restoreSession() {
 async function boot() {
   const { error } = await db
     .from("rooms")
-    .select("room_code,game_phase")
+    .select("room_code,game_phase,selected_category")
     .limit(1);
 
   if (error) {
     setConnection(false, "Database belum siap");
-    setupMessage.textContent = "Pastikan SQL V5 dan SQL V6 sudah dijalankan.";
+    setupMessage.textContent = "Pastikan SQL V5, V6, dan V7 sudah dijalankan.";
     return;
   }
 
@@ -658,6 +736,8 @@ plusImpostorBtn.addEventListener("click", async () => {
   const players = await loadPlayers();
   updateImpostorControls(players.length);
 });
+
+refreshScoreBtn.addEventListener("click", () => loadScoreboard(lobbyScoreboard));
 
 roomCodeInput.addEventListener("input", () => {
   roomCodeInput.value = normalizeCode(roomCodeInput.value);
