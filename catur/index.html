@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b1421">
+<title>Catur • Game Alpi</title><link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="app">
+<section id="modeScreen" class="screen">
+ <div class="topbar"><a href="../">← Game Alpi</a><span>♟️ Catur</span></div>
+ <p class="eyebrow">CHESS • 1–2 PEMAIN</p><h1>Catur</h1>
+ <p class="lead">Catur standar dengan langkah legal, check, checkmate, stalemate, castling, en passant, dan promotion.</p>
+ <div class="mode-grid">
+  <button id="multiModeBtn"><span>📱📱</span><b>Multi HP</b><small>2 pemain memakai HP masing-masing melalui room online.</small></button>
+  <button id="singleModeBtn"><span>📱</span><b>1 HP</b><small>Pass-and-play. Papan otomatis berputar ke pemain yang sedang mendapat giliran.</small></button>
+ </div>
+ <button id="rulesBtn" class="text-btn">? Cara Main & Fitur</button>
+</section>
+
+<section id="multiSetupScreen" class="screen hidden">
+ <div class="topbar"><button id="backModeBtn">←</button><span>Multi HP</span></div>
+ <div class="panel">
+  <label>Nama pemain</label><input id="playerName" maxlength="20" placeholder="Contoh: Alfi">
+  <button id="createRoomBtn" class="big-btn primary">＋ Buat Room</button><div class="or">ATAU</div>
+  <label>Kode room</label><input id="roomCodeInput" class="code-input" maxlength="6" inputmode="numeric" placeholder="123456">
+  <button id="joinRoomBtn" class="big-btn secondary">Gabung Room →</button><p id="setupMessage" class="message"></p>
+ </div>
+</section>
+
+<section id="lobbyScreen" class="screen hidden">
+ <div class="topbar"><a href="../">←</a><span>Lobby Catur</span></div>
+ <div class="room-code"><span>ROOM</span><strong id="roomCodeDisplay">------</strong><button id="copyCodeBtn">Salin</button></div>
+ <div id="playersList" class="players"></div>
+ <div id="hostPanel" class="panel host hidden">
+  <label>Timer per pemain</label>
+  <select id="timeControl"><option value="0">Tanpa batas</option><option value="300">5 menit</option><option value="600" selected>10 menit</option><option value="900">15 menit</option></select>
+  <small>Warna putih/hitam diacak saat game dimulai.</small>
+  <button id="startGameBtn" class="big-btn start">MULAI CATUR</button><p id="lobbyMessage" class="message"></p>
+ </div>
+ <button id="leaveLobbyBtn" class="leave-btn">Keluar Room</button>
+</section>
+
+<section id="gameScreen" class="game-screen hidden">
+ <header class="gamebar">
+  <div><strong>♟️ Catur</strong><span id="gameSub">Multi HP</span></div>
+  <button id="gameMenuBtn">⋮</button>
+ </header>
+
+ <div id="opponentBox" class="player-clock opponent-box">
+  <div class="player-identity"><span id="oppPiece">♟</span><div><b id="oppName">Hitam</b><small id="oppStatus">Menunggu</small></div></div><strong id="oppClock">10:00</strong>
+ </div>
+
+ <div id="statusBanner" class="status-banner">Putih jalan</div>
+ <div id="board" class="board"></div>
+
+ <div id="selfBox" class="player-clock self-box">
+  <div class="player-identity"><span id="selfPiece">♙</span><div><b id="selfName">Putih</b><small id="selfStatus">Giliranmu</small></div></div><strong id="selfClock">10:00</strong>
+ </div>
+
+ <div class="game-actions">
+  <button id="drawBtn">🤝 Tawarkan Seri</button><button id="resignBtn">🏳️ Menyerah</button>
+ </div>
+
+ <details class="history-box"><summary>Riwayat langkah <span id="moveCount">0</span></summary><div id="moveHistory"></div></details>
+
+ <div id="drawOfferPanel" class="draw-offer hidden"><b>Lawan menawarkan seri</b><div><button id="declineDrawBtn">Tolak</button><button id="acceptDrawBtn">Terima</button></div></div>
+</section>
+
+<section id="finishScreen" class="screen hidden">
+ <div class="finish-card"><div class="finish-icon">🏆</div><p class="eyebrow">PARTAI SELESAI</p><h1 id="finishTitle">Putih Menang</h1><p id="finishReason"></p>
+ <button id="rematchBtn" class="big-btn primary">Rematch</button><p id="rematchHint"></p><button id="finishHomeBtn" class="leave-btn">Kembali</button></div>
+</section>
+</main>
+
+<div id="promotionModal" class="sheet hidden"><div class="sheet-card"><div class="handle"></div><h2>Pilih Promotion</h2><div id="promotionChoices" class="promotion-grid"></div><button class="sheet-cancel" data-close-sheet>Batal</button></div></div>
+<div id="rulesModal" class="sheet hidden"><div class="sheet-card"><div class="handle"></div><h2>Catur • Game Alpi</h2><div class="rules">
+ <p><b>Tujuan</b>Checkmate raja lawan.</p><p><b>Multi HP</b>Putih/hitam diacak. Semua langkah disinkronkan realtime.</p><p><b>1 HP</b>Setelah langkah selesai, papan otomatis berputar mengikuti giliran.</p><p><b>Fitur</b>Castling, en passant, promotion, check, checkmate, stalemate, seri, menyerah, rematch, dan timer.</p></div><button class="big-btn primary" data-close-sheet>Mengerti</button></div></div>
+<div id="menuModal" class="sheet hidden"><div class="sheet-card"><div class="handle"></div><h2>Menu</h2><button id="menuRulesBtn" class="menu-row">❓ Cara Main</button><button id="leaveGameBtn" class="menu-row danger">🚪 Keluar dari Game</button><button class="sheet-cancel" data-close-sheet>Tutup</button></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chess.js@0.10.3/chess.min.js"></script>
+<script src="script.js"></script>
+</body></html>

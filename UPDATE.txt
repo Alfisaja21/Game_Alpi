@@ -1,59 +1,75 @@
-GAME ALPI — UPDATE UNO V4
-
-DIUBAH
-- Multi Action Card sekarang selalu aktif.
-- Kartu angka yang sama dapat dikeluarkan beberapa sekaligus dalam satu giliran.
-- Pemain memilih sendiri berapa kartu yang ingin dikeluarkan.
-- Sebelum dibuang, pemain dapat memilih warna kartu terakhir agar tidak salah pencet.
-- Skip, Reverse, +2, Wild, dan +4 juga dapat dikeluarkan beberapa sekaligus jika jenisnya sama.
-- +2 dan +4 tidak dicampur dalam satu batch. Harus jenis yang sama.
-- Timer giliran default menjadi 30 detik.
-- Pilihan timer: 15, 30, 45, 60 detik, atau tanpa batas.
+GAME ALPI — UPDATE WEREWOLF V1 + CATUR V1
 
 DITAMBAHKAN
-- Notifikasi besar saat mengambil kartu.
-- Notifikasi penalti +2/+4 lebih terlihat.
-- Menu ⋮ saat game berlangsung.
-- Tombol Keluar dari Game.
-- Konfirmasi agar pemain tidak salah keluar ketika hanya pindah aplikasi.
-- Status Online / Terputus pada pemain lain.
-- Realtime Presence untuk mendeteksi koneksi pemain.
-- Jika pemain terputus saat mendapat giliran, diberi waktu reconnect maksimal 30 detik.
-- Jika reconnect, timer giliran di-reset.
-- Jika tidak reconnect setelah 30 detik: otomatis ambil 1 / penalti lalu giliran dilewati.
-- Host otomatis berpindah jika Host keluar.
-- Jika hanya tersisa satu pemain, pemain terakhir otomatis menang.
+- Werewolf V1 dibuka di homepage.
+- Catur V1 dibuka di homepage.
+- Jumlah game aktif homepage menjadi 5.
 
-DIPERBAIKI
-- Member sekarang dapat keluar room tanpa menunggu Host menutup room.
-- Host yang keluar tidak lagi otomatis menghancurkan room selama masih ada pemain lain.
-- Keluar dari permainan saat game sedang berjalan sekarang didukung.
-- Kartu pemain yang benar-benar keluar dikembalikan ke deck lalu diacak.
-- State Host pada HP lain ikut diperbarui setelah Host berpindah.
-- Proteksi double tap / double action tetap dipertahankan.
-- Reconnect / refresh tidak dianggap sebagai keluar permanen.
+WEREWOLF V1
+- Multi HP 5–20 pemain.
+- Moderator otomatis.
+- Role dasar:
+  Werewolf, Warga, Seer/Peramal, Doctor.
+- Jumlah Werewolf otomatis:
+  5–7 = 1 Werewolf
+  8–11 = 2 Werewolf
+  12–15 = 3 Werewolf
+  16–20 = 4 Werewolf
+- Alur otomatis:
+  Malam Werewolf → Seer → Doctor → Pagi → Diskusi → Voting → Hasil.
+- Timer:
+  Aksi malam 30 detik.
+  Diskusi 120 detik.
+  Voting 30 detik.
+- Host bisa mempercepat diskusi ke Voting.
+- Pemain mati tetap menonton tetapi tidak bisa aksi/vote.
+- Role pemain mati tidak dibuka sampai game selesai.
+- Warga menang jika semua Werewolf mati.
+- Werewolf menang jika jumlah Werewolf hidup >= pemain non-Werewolf.
+- Host dapat berpindah jika Host keluar.
 
-ATURAN MULTI ACTION
-- Angka: harus angka yang sama. Contoh 5 merah + 5 biru + 5 hijau.
-- Skip: Skip dapat dibuang beberapa sekaligus.
-- Reverse: Reverse dapat dibuang beberapa sekaligus. Setiap Reverse membalik arah; jumlah genap membuat arah kembali seperti sebelumnya.
-- +2: beberapa +2 sekaligus menjumlahkan penalti. Contoh dua +2 = +4.
-- Wild: beberapa Wild boleh dibuang sekaligus, lalu pilih warna akhir.
-- +4: beberapa +4 sekaligus menjumlahkan penalti. Contoh dua +4 = +8.
-- Multi +4 dengan Challenge aktif menggunakan total penalti batch.
-- Jika aturan 7–0 aktif, batch angka 7 melakukan tukar kartu satu kali; batch angka 0 memutar tangan satu kali.
+CATUR V1
+- Multi HP 2 pemain.
+- Mode 1 HP / pass-and-play.
+- Mode 1 HP otomatis memutar papan mengikuti giliran.
+- Menggunakan aturan legal chess.js:
+  check, checkmate, stalemate, castling, en passant, promotion.
+- Promotion dapat memilih Queen, Rook, Bishop, Knight.
+- Warna putih/hitam Multi HP diacak.
+- Timer:
+  Tanpa batas, 5, 10, atau 15 menit.
+- Menyerah.
+- Tawarkan / terima / tolak seri.
+- Riwayat langkah.
+- Rematch; warna ditukar pada rematch.
+- Reconnect Multi HP melalui session localStorage.
+
+FILE DALAM ZIP
+- index.html
+- werewolf/index.html
+- werewolf/style.css
+- werewolf/script.js
+- catur/index.html
+- catur/style.css
+- catur/script.js
+- UPDATE.txt
+
+SQL TIDAK ADA DI ZIP.
+Jalankan terpisah:
+1. SUPABASE_WEREWOLF_V1.sql
+2. SUPABASE_CATUR_V1.sql
 
 CARA UPDATE
-1. Jalankan file SQL terpisah: SUPABASE_UNO_V4_PATCH.sql
-2. Pastikan Supabase menampilkan Success.
-3. Replace hanya:
-   - uno/index.html
-   - uno/style.css
-   - uno/script.js
-4. Commit ke GitHub.
-5. Tunggu Vercel selesai deploy.
-6. Refresh halaman UNO di HP.
+1. Jalankan kedua SQL di Supabase.
+2. Pastikan masing-masing menghasilkan Success.
+3. Replace root index.html.
+4. Tambahkan folder werewolf.
+5. Tambahkan folder catur.
+6. Commit GitHub.
+7. Tunggu Vercel deploy.
+8. Test Werewolf minimal 5 HP.
+9. Test Catur Multi HP dengan 2 HP dan Catur 1 HP pada satu HP.
 
-CATATAN
-- File SQL tidak dimasukkan ke ZIP.
-- Tidak ada file homepage / Impostor yang perlu diganti pada update ini.
+CATATAN V1
+- Werewolf sengaja masih memakai role dan aturan dasar agar mudah diuji bersama teman.
+- Catur Multi HP memvalidasi legal move di frontend menggunakan chess.js dan memakai update database atomik untuk sinkronisasi room. Ini cocok untuk permainan teman, tetapi belum ditujukan sebagai sistem turnamen anti-cheat.
