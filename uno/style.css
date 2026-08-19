@@ -112,3 +112,45 @@ h1 small{font-size:.28em;letter-spacing:0;color:#9cb1cd}
 .demo-draw{padding:14px 19px;border:4px solid white;border-radius:12px;color:#fff;background:repeating-linear-gradient(45deg,#0c1525,#0c1525 8px,#203859 8px,#203859 16px);font-size:12px;font-weight:1000}.demo-draw small{font-size:7px}.demo-uno{padding:14px 20px;border:4px solid white;border-radius:999px;color:#fff;background:linear-gradient(135deg,#ef3e4f,#ff861c);font-size:19px;font-weight:1000}
 .tutorial-buttons{display:grid;grid-template-columns:.8fr 1.2fr;gap:7px}.tutorial-buttons button{padding:11px;border:0;border-radius:10px;font-size:9px;font-weight:950}.tutorial-buttons #unoTutorialClose{color:#91aac9;background:#132a45}.tutorial-buttons #unoTutorialNext{color:#fff;background:linear-gradient(135deg,#286fe2,#58a8ff)}
 @media(max-width:420px){.quick-rules{grid-template-columns:1fr}}
+
+/* =========================================================
+   UNO V4 — MULTI ACTION / DRAW NOTICE / PRESENCE / LEAVE
+   ========================================================= */
+.always-rule{display:grid;grid-template-columns:1fr auto;gap:4px 8px;align-items:center;margin-top:8px;padding:10px;border:1px solid rgba(255,199,64,.16);border-radius:12px;background:rgba(117,78,17,.13)}
+.always-rule span{font-size:9px;font-weight:950}.always-rule b{padding:5px 7px;border-radius:999px;color:#ffe48a;background:#4a3c14;font-size:7px}.always-rule small{grid-column:1/-1;color:#998c6b;font-size:8px;line-height:1.4}
+.menu-dots{font-size:22px;line-height:1}
+.turn-connection{display:block;margin-top:4px;color:#ffd98b;font-size:7px;font-weight:850}
+.timer.warning{color:#402c00;background:#ffd34d;animation:timerPulse .65s infinite alternate}
+.timer.danger{color:white;background:#de394d;animation:timerPulse .35s infinite alternate}
+@keyframes timerPulse{to{transform:scale(1.06)}}
+.opponent.offline .opp-avatar{filter:grayscale(.8);opacity:.58}
+.opponent.offline b{color:#73859f}
+.opp-online{display:inline-flex!important;align-items:center;gap:3px;margin-top:2px!important}
+.opp-online:before{content:"";width:5px;height:5px;border-radius:50%;background:#42d97f}
+.opponent.offline .opp-online:before{background:#f0b94c}
+.opponent.offline .opp-online{color:#d2a95e!important}
+
+/* Big draw feedback */
+.draw-notice{position:fixed;inset:0;z-index:85;display:grid;place-items:center;padding:20px;background:rgba(2,8,14,.30);pointer-events:none;backdrop-filter:blur(1.5px)}
+.draw-notice-card{width:min(290px,86vw);padding:20px 17px;border:1px solid rgba(105,171,242,.28);border-radius:22px;text-align:center;background:rgba(8,25,44,.97);box-shadow:0 25px 60px rgba(0,0,0,.48);animation:drawPop .18s ease-out}
+.draw-notice-card>span{display:block;font-size:36px}.draw-notice-card strong{display:block;margin-top:5px;color:#fff;font-size:25px;letter-spacing:-.04em}.draw-notice-card p{margin:5px 0 0;color:#b0c6df;font-size:10px}.draw-notice-card small{display:block;margin-top:8px;color:#73b4ff;font-size:9px;font-weight:850}
+@keyframes drawPop{from{opacity:0;transform:scale(.88) translateY(10px)}to{opacity:1;transform:none}}
+
+/* Multi Action */
+.multi-action-sheet{max-height:91vh}
+.multi-title{display:flex;align-items:start;justify-content:space-between;gap:9px}.multi-title span{display:block;color:#f1c955;font-size:7px;font-weight:950;letter-spacing:.13em}.multi-title h3{margin-top:3px!important}.multi-title>b{padding:6px 8px;border-radius:999px;color:#ffe792;background:#443913;font-size:7px}
+.multi-toolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 0}.multi-toolbar button{padding:7px 9px;border:1px solid #305477;border-radius:9px;color:#abd1fa;background:#132b47;font-size:8px;font-weight:850}.multi-toolbar span{color:#829dbd;font-size:8px}
+.multi-card-list{display:flex;gap:7px;overflow-x:auto;padding:9px 4px 14px;scrollbar-width:none}.multi-card-list::-webkit-scrollbar{display:none}
+.multi-pick{position:relative;flex:0 0 67px;height:98px;padding:0;border:4px solid rgba(255,255,255,.82);border-radius:11px;color:#fff;opacity:.5;box-shadow:0 8px 16px rgba(0,0,0,.22);font-size:24px;font-weight:1000}.multi-pick.selected{opacity:1;transform:translateY(-5px);outline:3px solid #79cbff}.multi-pick .pick-check{position:absolute;right:-6px;top:-7px;display:grid;place-items:center;width:20px;height:20px;border:2px solid #fff;border-radius:50%;color:#17304a;background:#7dd3fc;font-size:9px}
+.final-color-box{padding:10px;border:1px solid #254667;border-radius:12px;background:#10243d}.final-color-box>span{color:#86a5c8;font-size:7px;font-weight:950;letter-spacing:.11em}.final-color-box>p{margin:3px 0 8px;color:#778fae;font-size:8px}
+.final-color-options{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.final-color-btn{height:42px;border:3px solid rgba(255,255,255,.65);border-radius:10px;color:white;font-size:8px;font-weight:900;opacity:.58}.final-color-btn.active{opacity:1;outline:3px solid #95d9ff}.final-color-btn.yellow{color:#172033}
+.multi-actions{display:grid;grid-template-columns:.8fr 1.2fr;gap:7px;margin-top:10px}.multi-actions button{padding:11px;border:0;border-radius:11px;font-size:9px;font-weight:950}.multi-actions button:first-child{color:#8fa8c8;background:#132a45}.multi-actions button:last-child{color:white;background:linear-gradient(135deg,#2874e8,#57aaff)}.multi-actions button:disabled{opacity:.4}
+.compact-sheet{padding-bottom:15px}.menu-row{display:grid;grid-template-columns:34px 1fr 16px;align-items:center;gap:8px;width:100%;margin-top:7px;padding:11px;border:1px solid #234462;border-radius:12px;color:#eef6ff;background:#112841;text-align:left}.menu-row>span{display:grid;place-items:center;width:33px;height:33px;border-radius:10px;background:#173653}.menu-row b{display:block;font-size:10px}.menu-row small{display:block;margin-top:2px;color:#8099b9;font-size:8px}.menu-row>strong{color:#6f91b6}.danger-row{border-color:#56283a;background:#2b1823}.danger-row>span{background:#46212e}.danger-row b{color:#ffbdc6}
+.leave-confirm-sheet{text-align:center}.leave-visual{display:grid;place-items:center;width:62px;height:62px;margin:3px auto 11px;border-radius:19px;background:#3a1c29;font-size:30px}.leave-confirm-sheet>p{color:#94aac6!important;line-height:1.5}.leave-info{padding:10px;border-radius:12px;text-align:left;background:#10243b}.leave-info>span{font-size:8px;font-weight:950}.leave-info ul{margin:6px 0 0;padding-left:18px;color:#8ba1be;font-size:8px;line-height:1.55}.confirm-leave{background:#b52d49!important}
+
+/* Mobile hand / multi-action guidance */
+.hand-cards .uno-card.same-group{box-shadow:0 0 0 2px rgba(255,214,92,.55),0 8px 20px rgba(0,0,0,.3)}
+@media(max-width:380px){
+  .multi-pick{flex-basis:61px;height:90px}
+  .final-color-options{grid-template-columns:1fr 1fr}
+}

@@ -80,6 +80,12 @@
           <div class="segmented"><button id="stackOffBtn" class="seg active">OFF</button><button id="stackOnBtn" class="seg">ON</button></div>
         </div>
 
+        <div class="always-rule">
+          <span>⚡ Multi Action Card</span>
+          <b>SELALU AKTIF</b>
+          <small>Dalam satu giliran kamu boleh membuang beberapa angka yang sama, atau beberapa kartu aksi dengan jenis yang sama.</small>
+        </div>
+
         <details id="advancedSettings" class="advanced">
           <summary>⚙ Pengaturan Lanjutan</summary>
           <div class="advanced-grid">
@@ -101,7 +107,7 @@
             </div>
             <div class="setting">
               <div class="setting-name">Timer Giliran <button class="help" data-help="Jika waktu habis, sistem otomatis mengambil kartu atau penalti lalu melewati giliran.">?</button></div>
-              <select id="turnTimerSelect"><option value="0">Tanpa batas</option><option value="15">15 detik</option><option value="30">30 detik</option><option value="60">60 detik</option></select>
+              <select id="turnTimerSelect"><option value="15">15 detik</option><option value="30" selected>30 detik</option><option value="45">45 detik</option><option value="60">60 detik</option><option value="0">Tanpa batas</option></select>
             </div>
             <div class="setting">
               <div class="setting-name">Penalti UNO <button class="help" data-help="Saat tersisa 1 kartu tekan UNO!. Jika lupa dan tertangkap pemain lain, kamu mengambil 2 kartu.">?</button></div>
@@ -123,7 +129,7 @@
     <div class="game-appbar">
       <div class="brand-mini"><strong>UNO</strong><span>Game Alpi</span></div>
       <div class="room-mini">Room <b id="gameRoomCode">------</b></div>
-      <button id="gameHelpBtn" class="circle-btn">?</button>
+      <button id="gameMenuBtn" class="circle-btn menu-dots">⋮</button>
     </div>
 
     <div class="turn-banner">
@@ -131,6 +137,7 @@
         <span id="turnSmall">GILIRAN</span>
         <strong id="turnTitle">Menunggu...</strong>
         <p id="turnInstruction">Tunggu giliranmu.</p>
+        <small id="turnConnectionHint" class="turn-connection hidden">⚠ Pemain terputus • menunggu reconnect</small>
       </div>
       <div id="turnTimer" class="timer">∞</div>
     </div>
@@ -160,6 +167,15 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <div id="drawNotice" class="draw-notice hidden" aria-live="assertive">
+      <div class="draw-notice-card">
+        <span id="drawNoticeIcon">🃏</span>
+        <strong id="drawNoticeTitle">+1 KARTU</strong>
+        <p id="drawNoticeText">Kamu mengambil 1 kartu.</p>
+        <small id="drawNoticeNext"></small>
       </div>
     </div>
 
@@ -223,6 +239,70 @@
   </div>
 </div>
 
+
+<!-- Multi Action Card -->
+<div id="multiActionModal" class="sheet hidden">
+  <div class="sheet-card multi-action-sheet">
+    <div class="sheet-handle"></div>
+    <div class="multi-title">
+      <div><span>MULTI ACTION CARD</span><h3>Pilih kartu yang dibuang</h3></div>
+      <b>AKTIF</b>
+    </div>
+    <p id="multiRuleText">Kamu boleh mengeluarkan beberapa kartu yang sama dalam satu giliran.</p>
+
+    <div class="multi-toolbar">
+      <button id="selectAllMultiBtn">Pilih Semua</button>
+      <span id="multiSelectedCount">1 dipilih</span>
+    </div>
+
+    <div id="multiCardList" class="multi-card-list"></div>
+
+    <div id="finalColorBox" class="final-color-box">
+      <span>WARNA KARTU TERAKHIR</span>
+      <p>Kamu bisa mengganti warna akhir jika salah memilih.</p>
+      <div id="finalColorOptions" class="final-color-options"></div>
+    </div>
+
+    <div class="multi-actions">
+      <button id="cancelMultiBtn">Batal</button>
+      <button id="confirmMultiBtn">Buang Kartu</button>
+    </div>
+  </div>
+</div>
+
+<!-- Menu saat game -->
+<div id="gameMenuSheet" class="sheet hidden">
+  <div class="sheet-card compact-sheet">
+    <div class="sheet-handle"></div>
+    <h3>Menu Game</h3>
+    <button id="menuHelpBtn" class="menu-row"><span>❓</span><div><b>Cara Main</b><small>Lihat aturan dan tutorial UNO.</small></div><strong>›</strong></button>
+    <button id="menuLeaveBtn" class="menu-row danger-row"><span>🚪</span><div><b>Keluar dari Game</b><small>Keluar permanen dari pertandingan ini.</small></div><strong>›</strong></button>
+    <button id="closeGameMenuBtn" class="sheet-cancel">Tutup</button>
+  </div>
+</div>
+
+<!-- Konfirmasi keluar -->
+<div id="leaveGameModal" class="sheet hidden">
+  <div class="sheet-card leave-confirm-sheet">
+    <div class="sheet-handle"></div>
+    <div class="leave-visual">🚪</div>
+    <h3>Keluar dari permainan?</h3>
+    <p>Kalau hanya pindah aplikasi, layar mati, refresh, atau internet terputus, <strong>jangan tekan keluar</strong>. Kamu masih bisa reconnect.</p>
+    <div class="leave-info">
+      <span>Jika benar-benar keluar:</span>
+      <ul>
+        <li>Kartumu dikembalikan ke deck dan diacak.</li>
+        <li>Permainan pemain lain tetap berjalan.</li>
+        <li>Jika kamu Host, Host berpindah otomatis.</li>
+      </ul>
+    </div>
+    <div class="multi-actions">
+      <button id="cancelLeaveGameBtn">Batal</button>
+      <button id="confirmLeaveGameBtn" class="confirm-leave">Ya, Keluar</button>
+    </div>
+  </div>
+</div>
+
 <!-- How to play -->
 <div id="helpModal" class="sheet hidden">
   <div class="sheet-card help-sheet">
@@ -231,10 +311,11 @@
     <div class="help-steps">
       <div><b>1</b><p>Buang kartu dengan <strong>warna, angka, atau simbol</strong> yang sama dengan kartu di tengah.</p></div>
       <div><b>2</b><p>Kalau tidak punya kartu yang cocok, tekan <strong>AMBIL</strong>. Default-nya ambil 1 lalu giliran selesai.</p></div>
-      <div><b>3</b><p><strong>Skip</strong> melewati pemain, <strong>Reverse</strong> membalik arah, dan <strong>+2</strong> memberi penalti.</p></div>
+      <div><b>3</b><p><strong>Multi Action selalu aktif.</strong> Angka yang sama boleh dibuang beberapa sekaligus. Skip, Reverse, +2, Wild, dan +4 juga boleh dikeluarkan beberapa jika jenis kartunya sama.</p></div>
       <div><b>4</b><p><strong>Wild</strong> dan <strong>+4</strong> membiarkanmu memilih warna berikutnya.</p></div>
       <div><b>5</b><p>Saat kartumu tinggal 1, tekan <strong>UNO!</strong> sebelum pemain lain menekan <strong>TANGKAP!</strong>.</p></div>
-      <div><b>6</b><p>Pemain pertama yang tidak memiliki kartu menjadi <strong>pemenang</strong>.</p></div>
+      <div><b>6</b><p>Setiap pemain memiliki timer giliran. Jika waktu habis, sistem mengambil 1 kartu lalu melewati giliran. Jika koneksi terputus, pemain diberi waktu 30 detik untuk reconnect.</p></div>
+      <div><b>7</b><p>Pemain pertama yang tidak memiliki kartu menjadi <strong>pemenang</strong>.</p></div>
     </div>
     <button id="closeHelpBtn" class="big-btn primary">Mengerti</button>
   </div>
