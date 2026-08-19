@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#07111f">
+  <title>Impostor • Game Alpi</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <section class="card">
+      <a class="back-link" href="../">← Kembali ke Game Alpi</a>
+
+      <div id="connectionBadge" class="connection-badge">
+        <span class="connection-dot"></span>
+        <span id="connectionText">Menghubungkan Supabase...</span>
+      </div>
+
+      <section id="setupScreen">
+        <p class="eyebrow">MULTIPLAYER</p>
+        <h1>Impostor</h1>
+        <p class="subtitle">Buat room baru atau gabung dengan kode dari host.</p>
+
+        <label class="label">Nama pemain</label>
+        <input id="playerName" class="text-input" maxlength="20" placeholder="Contoh: Alfi">
+
+        <button id="createRoomBtn" class="primary-btn">＋ Buat Room</button>
+
+        <div class="divider"><span>ATAU</span></div>
+
+        <label class="label">Kode room</label>
+        <input id="roomCodeInput" class="text-input code-input" maxlength="6" inputmode="numeric" placeholder="123456">
+
+        <button id="joinRoomBtn" class="secondary-btn">Gabung Room →</button>
+        <p id="setupMessage" class="form-message"></p>
+      </section>
+
+      <section id="lobbyScreen" class="hidden">
+        <div class="lobby-head">
+          <div><p class="eyebrow">LOBBY</p><h1>Siap Main?</h1></div>
+          <span id="hostBadge" class="host-badge hidden">HOST</span>
+        </div>
+
+        <div class="room-code-card">
+          <span>KODE ROOM</span>
+          <strong id="roomCodeDisplay">------</strong>
+          <button id="copyCodeBtn" class="copy-btn">Salin Kode</button>
+        </div>
+
+        <div class="players-header">
+          <div><span class="label-small">PEMAIN</span><strong id="playerCount">0 pemain</strong></div>
+          <span class="live-pill"><i></i> Realtime</span>
+        </div>
+
+        <div id="playersList" class="players-list"></div>
+
+        <div id="hostControls" class="host-controls hidden">
+          <div class="control-head">
+            <div>
+              <span class="label-small">JUMLAH IMPOSTOR</span>
+              <strong id="impostorHelp">1 impostor</strong>
+            </div>
+            <div class="stepper">
+              <button id="minusImpostorBtn">−</button>
+              <strong id="impostorCountDisplay">1</strong>
+              <button id="plusImpostorBtn">＋</button>
+            </div>
+          </div>
+          <button id="startGameBtn" class="start-btn">Mulai Game</button>
+          <p class="host-hint">Minimal 3 pemain.</p>
+        </div>
+
+        <p id="lobbyMessage" class="form-message"></p>
+        <button id="leaveRoomBtn" class="danger-btn">Keluar dari Room</button>
+      </section>
+
+      <section id="revealScreen" class="hidden">
+        <p class="eyebrow">ROLE RAHASIA</p>
+        <h1>Jangan Tunjukkan</h1>
+        <p class="subtitle">Pastikan hanya kamu yang melihat layar ini.</p>
+
+        <div id="roleCard" class="role-card">
+          <span id="roleLabel" class="role-label">PERANMU</span>
+          <h2 id="roleName">...</h2>
+          <div class="secret-box">
+            <span id="secretLabel">KATA RAHASIA</span>
+            <strong id="secretValue">...</strong>
+          </div>
+          <p id="roleDescription"></p>
+        </div>
+
+        <button id="seenBtn" class="primary-btn">Saya Sudah Melihat</button>
+        <p id="revealMessage" class="form-message"></p>
+      </section>
+
+      <section id="waitingScreen" class="hidden">
+        <p class="eyebrow">MENUNGGU PEMAIN</p>
+        <h1>Role Sudah Dilihat</h1>
+        <div class="waiting-box">
+          <div class="pulse-ring">👀</div>
+          <h2 id="seenProgress">0 / 0 siap</h2>
+          <p>Tunggu sampai semua pemain selesai melihat role masing-masing.</p>
+        </div>
+      </section>
+
+      <section id="discussionScreen" class="hidden">
+        <p class="eyebrow">FASE DISKUSI</p>
+        <h1>Mulai Berdiskusi</h1>
+        <div class="discussion-box">
+          <div class="pulse-ring">💬</div>
+          <h2>Semua pemain sudah siap</h2>
+          <p>Berikan petunjuk tanpa menyebut kata rahasia secara langsung. Cari siapa yang tidak tahu kata tersebut.</p>
+          <div class="mini-room">Room <strong id="discussionRoomCode">------</strong></div>
+        </div>
+        <button id="resetLobbyBtn" class="secondary-btn hidden">Kembali ke Lobby</button>
+      </section>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="script.js"></script>
+</body>
+</html>
