@@ -184,3 +184,19 @@ h1 {
     height: 62px;
   }
 }
+
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 18px;
+  color: #93c5fd;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.back-link:hover {
+  color: #dbeafe;
+}
