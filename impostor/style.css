@@ -344,3 +344,34 @@ h1,h2,h3,p,strong,span{max-width:100%}
   line-height:1.45;
 }
 .first-speaker-box strong{color:#fff;overflow-wrap:anywhere}
+
+/* =========================================================
+   MOBILE V3 — INTRO / HELP
+   ========================================================= */
+.intro-card{max-width:650px}
+.intro-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.intro-help{padding:7px 9px;border:1px solid rgba(96,165,250,.22);border-radius:999px;color:#9fcaff;background:rgba(37,99,235,.08);font-size:9px;font-weight:850}
+.how-summary{display:grid;gap:7px;margin:18px 0}
+.summary-item{display:grid;grid-template-columns:36px 1fr;gap:9px;align-items:start;padding:10px;border:1px solid rgba(148,163,184,.10);border-radius:13px;background:#0d1a2d}
+.summary-item>span{display:grid;place-items:center;width:34px;height:34px;border-radius:11px;background:#132b4a;font-size:17px}
+.summary-item.citizen>span{background:#123a31}.summary-item.spy>span{background:#3a1e2b}
+.summary-item strong{display:block;font-size:10px}.summary-item p{margin:3px 0 0;color:#8fa4c1;font-size:9px;line-height:1.42}
+.mode-label{margin:18px 0 8px;color:#7894b8;font-size:8px;font-weight:950;letter-spacing:.14em}
+.mode-grid-clear .mode-choice{min-height:155px}
+.mode-choice .mode-emoji{font-size:27px}
+.mode-choice b{display:block;margin-top:9px;color:#80b7f6;font-size:8px;font-weight:850}
+.tutorial-modal{position:fixed;inset:0;z-index:999;display:flex;align-items:flex-end;justify-content:center;padding:10px;background:rgba(1,7,13,.74);backdrop-filter:blur(6px)}
+.tutorial-sheet{width:min(500px,100%);padding:14px 16px 16px;border:1px solid #294a70;border-radius:24px 24px 17px 17px;background:#0d2038;box-shadow:0 -20px 60px rgba(0,0,0,.48)}
+.tutorial-progress{display:flex;align-items:center;justify-content:space-between;gap:10px;color:#7c96b8;font-size:8px;font-weight:900}
+#tutorialDots{display:flex;gap:4px}#tutorialDots i{width:6px;height:6px;border-radius:999px;background:#29415f}#tutorialDots i.active{width:15px;background:#5aa5ff}
+.tutorial-slide{padding:16px 3px 11px;text-align:center}.tutorial-visual{display:grid;place-items:center;width:72px;height:72px;margin:0 auto 13px;border-radius:22px;background:linear-gradient(145deg,#193a62,#14243d);font-size:35px}
+.tutorial-slide h2{margin:0;font-size:21px}.tutorial-slide p{margin:8px auto 0;max-width:390px;color:#93a9c7;font-size:10px;line-height:1.55}
+.tutorial-actions{display:grid;grid-template-columns:.8fr 1.2fr;gap:7px}.tutorial-actions button{padding:11px;border:0;border-radius:11px;font-size:9px;font-weight:950}
+#tutorialSkipBtn{color:#91a7c4;background:#132741}#tutorialNextBtn{color:#fff;background:linear-gradient(135deg,#276fe2,#56a7ff)}
+@media(max-width:540px){
+  .intro-card{padding:16px!important}
+  .intro-card h1{font-size:46px}
+  .how-summary{gap:6px}
+  .mode-grid-clear{grid-template-columns:1fr!important}
+  .mode-grid-clear .mode-choice{min-height:0;padding:13px!important}
+}

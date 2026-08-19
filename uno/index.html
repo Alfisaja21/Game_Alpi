@@ -20,9 +20,16 @@
 
       <p class="eyebrow">MULTIPLAYER • 2–20 PEMAIN</p>
       <h1>UNO <small>• Game Alpi</small></h1>
-      <p class="subtitle">Habiskan semua kartu lebih dulu. Cocokkan warna, angka, atau simbol dengan kartu di tengah.</p>
+      <p class="subtitle">Habiskan semua kartu lebih dulu. Setiap pemain menggunakan HP masing-masing.</p>
 
-      <button id="howToPlayBtn" class="how-btn">? Cara Main Singkat</button>
+      <div class="quick-rules">
+        <div><span>🎯</span><p><b>Tujuan</b>Jadilah pemain pertama yang kartunya habis.</p></div>
+        <div><span>🃏</span><p><b>Giliran</b>Mainkan kartu dengan warna, angka, atau simbol yang cocok.</p></div>
+        <div><span>➕</span><p><b>Tidak cocok?</b>Tekan AMBIL. Default: ambil 1 kartu lalu giliran selesai.</p></div>
+        <div><span>📣</span><p><b>Tinggal 1 kartu?</b>Tekan UNO! sebelum pemain lain menekan TANGKAP!</p></div>
+      </div>
+
+      <button id="howToPlayBtn" class="how-btn">? Cara Main Lengkap</button>
 
       <div class="form-block">
         <label>Nama pemain</label>
@@ -230,6 +237,51 @@
       <div><b>6</b><p>Pemain pertama yang tidak memiliki kartu menjadi <strong>pemenang</strong>.</p></div>
     </div>
     <button id="closeHelpBtn" class="big-btn primary">Mengerti</button>
+  </div>
+</div>
+
+
+<div id="firstTutorialModal" class="sheet tutorial-first hidden">
+  <div class="sheet-card tutorial-card">
+    <div class="tutorial-top">
+      <span id="unoTutorialStep">1 / 4</span>
+      <div id="unoTutorialDots" class="tutorial-dots"></div>
+    </div>
+
+    <div class="uno-tutorial-slide" data-uno-slide="0">
+      <div class="tutorial-demo demo-center">
+        <div class="demo-card red">7</div>
+      </div>
+      <h3>Kartu tengah adalah acuan</h3>
+      <p>Kamu boleh bermain jika warna, angka, atau simbol kartumu cocok dengan kartu yang ada di tengah.</p>
+    </div>
+
+    <div class="uno-tutorial-slide hidden" data-uno-slide="1">
+      <div class="tutorial-demo demo-hand">
+        <div class="demo-card blue">3</div>
+        <div class="demo-card red glow">9</div>
+        <div class="demo-card yellow">5</div>
+      </div>
+      <h3>Lihat kartu yang menyala</h3>
+      <p>Kartu yang bisa dimainkan dibuat lebih terang dan sedikit naik. Tekan kartu tersebut untuk membuangnya.</p>
+    </div>
+
+    <div class="uno-tutorial-slide hidden" data-uno-slide="2">
+      <div class="tutorial-demo"><div class="demo-draw">AMBIL<br><small>1 kartu</small></div></div>
+      <h3>Kalau tidak punya kartu cocok</h3>
+      <p>Tekan AMBIL. Pada aturan default kamu mengambil satu kartu, lalu giliran pindah ke pemain berikutnya.</p>
+    </div>
+
+    <div class="uno-tutorial-slide hidden" data-uno-slide="3">
+      <div class="tutorial-demo"><div class="demo-uno">UNO!</div></div>
+      <h3>Jangan lupa UNO!</h3>
+      <p>Ketika kartumu tinggal satu, tekan UNO!. Jika lupa dan pemain lain lebih dulu menekan TANGKAP!, kamu mendapat 2 kartu.</p>
+    </div>
+
+    <div class="tutorial-buttons">
+      <button id="unoTutorialClose">Tutup</button>
+      <button id="unoTutorialNext">Lanjut</button>
+    </div>
   </div>
 </div>
 

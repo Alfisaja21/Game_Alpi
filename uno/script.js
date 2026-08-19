@@ -7,6 +7,11 @@ let roomCode=null,playerId=null,token=null,playerName=null,isHost=false;
 let room=null,players=[],hand=[],roomChannel=null,playerChannel=null,timerHandle=null;
 let stacking=false,jumpIn=false,sevenZero=false,drawUntil=false,challenge4=false,turnSeconds=0,unoPenalty=true;
 let pendingCard=null;
+let actionBusy=false;
+let routeBusy=false;
+let routeQueued=false;
+let toastTimer=null;
+const UNO_TUTORIAL_KEY="gameAlpiUnoTutorialSeenV3";
 
 function esc(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
 function normName(v){return v.trim().replace(/\s+/g," ").slice(0,20)}
@@ -22,6 +27,44 @@ function cardClass(c){return c.color||"wild"}
 function isMyTurn(){return room?.current_player_id===playerId}
 function canClick(c){if(room?.challenge_pending)return false;if(isMyTurn())return !!c.playable;return !!(room?.jump_in&&c.jump_playable)}
 function joinUrl(){const u=new URL(location.href);u.search="";u.searchParams.set("room",roomCode);return u.toString()}
+
+function friendlyError(err){
+ const m=String(err?.message||err||"Terjadi kesalahan.");
+ if(/room_code.*ambiguous/i.test(m))return "Database room belum memakai patch terbaru.";
+ if(/not find the function|schema cache/i.test(m))return "Database UNO belum siap. Jalankan SQL setup/patch terlebih dahulu.";
+ if(/Belum giliranmu/i.test(m))return "Bukan giliranmu.";
+ if(/Kartu ini tidak dapat dimainkan/i.test(m))return "Kartu itu belum bisa dimainkan.";
+ if(/Sesi tidak valid/i.test(m))return "Sesi pemain sudah kedaluwarsa. Masuk room lagi.";
+ return m;
+}
+function setBusy(value, el=null){
+ actionBusy=value;
+ if(el)el.classList.toggle("action-busy",value);
+}
+function toast(text){
+ let t=document.getElementById("gameToast");
+ if(!t){
+   t=document.createElement("div");t.id="gameToast";t.className="game-toast";
+   document.body.appendChild(t);
+ }
+ t.textContent=text;
+ t.classList.add("show");
+ clearTimeout(toastTimer);
+ toastTimer=setTimeout(()=>t.classList.remove("show"),1800);
+}
+async function refreshGameState(){
+ await loadRoom();
+ await loadPlayers();
+ if(room?.phase==="playing")await loadHand();
+}
+async function safeRoute(){
+ if(routeBusy){routeQueued=true;return}
+ routeBusy=true;
+ try{await route()}finally{
+   routeBusy=false;
+   if(routeQueued){routeQueued=false;queueMicrotask(safeRoute)}
+ }
+}
 
 async function loadRoom(){if(!roomCode)return null;const {data,error}=await db.from("color_clash_rooms").select("*").eq("room_code",roomCode).maybeSingle();if(error)return null;room=data;return data}
 async function loadPlayers(){
@@ -92,6 +135,8 @@ function renderHand(){
 function renderTurn(){
  const current=players.find(p=>p.id===room?.current_player_id);
  const myTurn=isMyTurn();
+ document.querySelector(".turn-banner")?.classList.toggle("my-turn",myTurn);
+ document.querySelector(".turn-banner")?.classList.toggle("waiting",!myTurn);
  $("turnSmall").textContent=myTurn?"SEKARANG":"GILIRAN";
  $("turnTitle").textContent=myTurn?"Giliranmu":(current?.player_name||"Menunggu...");
  if(room?.challenge_pending&&room?.challenge_player_id===playerId){
@@ -135,7 +180,7 @@ async function showLobby(){
  }
 }
 async function showGame(){
- show("gameScreen");$("gameMessage").textContent="";$("gameRoomCode").textContent=roomCode;
+ show("gameScreen");$("gameRoomCode").textContent=roomCode;
  await loadRoom();await loadPlayers();await loadHand();renderTop();renderTurn();startTurnTimer()
 }
 async function showResult(){
@@ -151,8 +196,11 @@ async function subscribe(){
  roomChannel=db.channel(`uno-room-${roomCode}-${Date.now()}`)
   .on("postgres_changes",{event:"*",schema:"public",table:"color_clash_rooms",filter:`room_code=eq.${roomCode}`},async p=>{
     if(p.eventType==="DELETE"){await leaveLocal("Room ditutup.");return}
-    room=p.new;await route()
-  }).subscribe(s=>{if(s==="SUBSCRIBED")setConnection(true,"Online")});
+    room=p.new;await safeRoute()
+  }).subscribe(s=>{
+    if(s==="SUBSCRIBED")setConnection(true,"Online");
+    if(s==="CHANNEL_ERROR"||s==="TIMED_OUT")setConnection(false,"Menyambung ulang...");
+  });
  playerChannel=db.channel(`uno-players-${roomCode}-${Date.now()}`)
   .on("postgres_changes",{event:"*",schema:"public",table:"color_clash_players",filter:`room_code=eq.${roomCode}`},async()=>{
     await loadPlayers();
@@ -160,21 +208,32 @@ async function subscribe(){
     else if(room?.phase==="playing"){await loadHand();renderTurn()}
   }).subscribe();
 }
-async function enter(){save();await loadRoom();if(!room){await leaveLocal("Room tidak ditemukan.");return}await subscribe();await route()}
+async function enter(){save();await loadRoom();if(!room){await leaveLocal("Room tidak ditemukan.");return}await subscribe();await safeRoute()}
 
 async function createRoom(){
+ if(actionBusy)return;
  const name=normName($("playerName").value);
- if(!name){$("setupMessage").textContent="Isi nama pemain.";return}
- const {data,error}=await db.rpc("color_clash_create_room",{p_player_name:name});
- if(error||!data?.length){$("setupMessage").textContent=error?.message||"Gagal membuat room.";return}
- const r=data[0];roomCode=r.room_code;playerId=r.player_id;token=r.player_token;playerName=name;isHost=true;await enter()
+ if(!name){$("setupMessage").textContent="Masukkan nama pemain terlebih dahulu.";return}
+ setBusy(true,$("createRoomBtn"));$("setupMessage").textContent="";
+ try{
+  const {data,error}=await db.rpc("color_clash_create_room",{p_player_name:name});
+  if(error||!data?.length){$("setupMessage").textContent=friendlyError(error||"Gagal membuat room.");return}
+  const r=data[0];roomCode=r.room_code;playerId=r.player_id;token=r.player_token;playerName=name;isHost=true;
+  await enter()
+ }finally{setBusy(false,$("createRoomBtn"))}
 }
 async function joinRoom(){
+ if(actionBusy)return;
  const name=normName($("playerName").value),code=normCode($("roomCodeInput").value);
- if(!name||code.length!==6){$("setupMessage").textContent="Isi nama dan kode room 6 digit.";return}
- const {data,error}=await db.rpc("color_clash_join_room",{p_room_code:code,p_player_name:name});
- if(error||!data?.length){$("setupMessage").textContent=error?.message||"Gagal gabung room.";return}
- const r=data[0];roomCode=r.room_code;playerId=r.player_id;token=r.player_token;playerName=name;isHost=false;await enter()
+ if(!name){$("setupMessage").textContent="Masukkan nama pemain.";return}
+ if(code.length!==6){$("setupMessage").textContent="Kode room harus 6 angka.";return}
+ setBusy(true,$("joinRoomBtn"));$("setupMessage").textContent="";
+ try{
+  const {data,error}=await db.rpc("color_clash_join_room",{p_room_code:code,p_player_name:name});
+  if(error||!data?.length){$("setupMessage").textContent=friendlyError(error||"Gagal gabung room.");return}
+  const r=data[0];roomCode=r.room_code;playerId=r.player_id;token=r.player_token;playerName=name;isHost=false;
+  await enter()
+ }finally{setBusy(false,$("joinRoomBtn"))}
 }
 async function kickPlayer(id){
  if(!confirm("Keluarkan pemain ini dari room?"))return;
@@ -188,34 +247,51 @@ async function leaveLocal(msg){
 }
 
 async function startGame(){
- const {error}=await db.rpc("color_clash_start_game",{
-  p_room_code:roomCode,p_host_id:playerId,p_host_token:token,
-  p_stacking:stacking,p_jump_in:jumpIn,p_seven_zero:sevenZero,
-  p_draw_until_playable:drawUntil,p_challenge_wild4:challenge4,
-  p_turn_seconds:turnSeconds,p_uno_penalty:unoPenalty
- });
- if(error)$("lobbyMessage").textContent=error.message
+ if(actionBusy)return;
+ setBusy(true,$("startGameBtn"));$("lobbyMessage").textContent="";
+ try{
+  const {error}=await db.rpc("color_clash_start_game",{
+   p_room_code:roomCode,p_host_id:playerId,p_host_token:token,
+   p_stacking:stacking,p_jump_in:jumpIn,p_seven_zero:sevenZero,
+   p_draw_until_playable:drawUntil,p_challenge_wild4:challenge4,
+   p_turn_seconds:turnSeconds,p_uno_penalty:unoPenalty
+  });
+  if(error)$("lobbyMessage").textContent=friendlyError(error);
+  else toast("Game dimulai!");
+ }finally{setBusy(false,$("startGameBtn"))}
 }
 async function drawCard(){
- const {data,error}=await db.rpc("color_clash_draw",{p_player_id:playerId,p_player_token:token});
- if(error){$("gameMessage").textContent=error.message;return}
- if(data?.status==="playable_drawn")$("gameMessage").textContent=`Mengambil ${data.drawn} kartu. Ada kartu yang bisa dimainkan.`;
- else $("gameMessage").textContent=`Mengambil ${data?.drawn||0} kartu.`;
- await loadHand()
+ if(actionBusy||!isMyTurn())return;
+ setBusy(true,$("drawBtn"));$("gameMessage").textContent="";
+ try{
+  const {data,error}=await db.rpc("color_clash_draw",{p_player_id:playerId,p_player_token:token});
+  if(error){$("gameMessage").textContent=friendlyError(error);return}
+  if(data?.status==="playable_drawn")toast(`Mengambil ${data.drawn} kartu. Ada kartu yang bisa dimainkan.`);
+  else toast(`Mengambil ${data?.drawn||0} kartu.`);
+  await refreshGameState();renderTop();renderTurn()
+ }finally{setBusy(false,$("drawBtn"))}
 }
 function selectCard(id){
+ if(actionBusy)return;
  const c=hand.find(x=>x.card_id===id);
- if(!c||!canClick(c))return;
+ if(!c||!canClick(c)){toast(isMyTurn()?"Kartu ini belum cocok.":"Tunggu giliranmu.");return;}
  pendingCard=c;
  if(c.kind==="wild"||c.kind==="wild4"){openSheet("colorModal");return}
  if(c.kind==="number"&&c.value===7&&room?.seven_zero){renderSwap();openSheet("swapModal");return}
  playCard(c,null,null)
 }
 async function playCard(c,color,target){
+ if(actionBusy)return;
  closeSheets();
- const {error}=await db.rpc("color_clash_play_card",{p_player_id:playerId,p_player_token:token,p_card_id:c.card_id,p_chosen_color:color,p_swap_target_id:target});
- if(error){$("gameMessage").textContent=error.message;return}
- pendingCard=null;await loadHand()
+ setBusy(true);
+ $("gameMessage").textContent="";
+ try{
+  const {error}=await db.rpc("color_clash_play_card",{p_player_id:playerId,p_player_token:token,p_card_id:c.card_id,p_chosen_color:color,p_swap_target_id:target});
+  if(error){$("gameMessage").textContent=friendlyError(error);return}
+  pendingCard=null;
+  await refreshGameState();renderTop();renderTurn();
+  toast("Kartu dimainkan")
+ }finally{setBusy(false)}
 }
 function renderSwap(){
  $("swapPlayers").innerHTML=players.filter(p=>p.id!==playerId).map(p=>`<button class="swap-player" data-swap="${p.id}">${esc(p.player_name)} • ${p.card_count} kartu</button>`).join("");
@@ -223,11 +299,25 @@ function renderSwap(){
 }
 function openSheet(id){$(id).classList.remove("hidden")}
 function closeSheets(){["colorModal","swapModal","helpModal"].forEach(id=>$(id).classList.add("hidden"))}
-async function callUno(){const {error}=await db.rpc("color_clash_call_uno",{p_player_id:playerId,p_player_token:token});$("gameMessage").textContent=error?error.message:"UNO! berhasil dipanggil."}
-async function catchUno(){const {error}=await db.rpc("color_clash_catch_uno",{p_player_id:playerId,p_player_token:token});$("gameMessage").textContent=error?error.message:"Kena! Pemain lupa UNO dan mendapat +2."}
-async function accept4(){const {error}=await db.rpc("color_clash_accept_wild4",{p_player_id:playerId,p_player_token:token});if(error)$("gameMessage").textContent=error.message}
-async function challengeWild4(){const {data,error}=await db.rpc("color_clash_challenge_wild4",{p_player_id:playerId,p_player_token:token});if(error){$("gameMessage").textContent=error.message;return}$("gameMessage").textContent=data==="challenge_success"?"Challenge berhasil! Pemberi +4 mengambil 4.":"Challenge gagal. Kamu mengambil 6."}
-async function backLobby(){const {error}=await db.rpc("color_clash_reset_lobby",{p_room_code:roomCode,p_host_id:playerId,p_host_token:token});if(error)$("resultHint").textContent=error.message}
+async function callUno(){
+ if(actionBusy)return;
+ setBusy(true,$("unoBtn"));
+ try{
+  const {error}=await db.rpc("color_clash_call_uno",{p_player_id:playerId,p_player_token:token});
+  if(error)$("gameMessage").textContent=friendlyError(error);else toast("UNO! 📣");
+ }finally{setBusy(false,$("unoBtn"))}
+}
+async function catchUno(){
+ if(actionBusy)return;
+ setBusy(true,$("catchBtn"));
+ try{
+  const {error}=await db.rpc("color_clash_catch_uno",{p_player_id:playerId,p_player_token:token});
+  if(error)$("gameMessage").textContent=friendlyError(error);else toast("Tertangkap! +2 kartu");
+ }finally{setBusy(false,$("catchBtn"))}
+}
+async function accept4(){const {error}=await db.rpc("color_clash_accept_wild4",{p_player_id:playerId,p_player_token:token});if(error)$("gameMessage").textContent=friendlyError(error)}
+async function challengeWild4(){const {data,error}=await db.rpc("color_clash_challenge_wild4",{p_player_id:playerId,p_player_token:token});if(error){$("gameMessage").textContent=friendlyError(error);return}$("gameMessage").textContent=data==="challenge_success"?"Challenge berhasil! Pemberi +4 mengambil 4.":"Challenge gagal. Kamu mengambil 6."}
+async function backLobby(){const {error}=await db.rpc("color_clash_reset_lobby",{p_room_code:roomCode,p_host_id:playerId,p_host_token:token});if(error)$("resultHint").textContent=friendlyError(error)}
 
 function setPair(off,on,setter){$(off).onclick=()=>{setter(false);syncSettings()};$(on).onclick=()=>{setter(true);syncSettings()}}
 setPair("stackOffBtn","stackOnBtn",v=>stacking=v);
@@ -246,7 +336,7 @@ $("copyCodeBtn").onclick=async()=>{try{await navigator.clipboard.writeText(roomC
 $("showQrBtn").onclick=()=>{$("qrPanel").classList.toggle("hidden");if(!$("qrPanel").classList.contains("hidden")){const b=$("qrcode");b.innerHTML="";if(window.QRCode)new QRCode(b,{text:joinUrl(),width:160,height:160,correctLevel:QRCode.CorrectLevel.M})}};
 document.querySelectorAll("[data-color]").forEach(b=>b.onclick=()=>playCard(pendingCard,b.dataset.color,null));
 document.querySelectorAll("[data-close-modal]").forEach(b=>b.onclick=closeSheets);
-$("howToPlayBtn").onclick=()=>openSheet("helpModal");$("lobbyHelpBtn").onclick=()=>openSheet("helpModal");$("gameHelpBtn").onclick=()=>openSheet("helpModal");$("closeHelpBtn").onclick=closeSheets;
+$("closeHelpBtn").onclick=closeSheets;
 
 function initHelpTips(){
  const pop=$("helpPopover");
@@ -257,6 +347,39 @@ function initHelpTips(){
  document.addEventListener("click",()=>pop.classList.add("hidden"))
 }
 initHelpTips();syncSettings();
+
+
+function initUnoTutorial(){
+ const modal=$("firstTutorialModal");
+ const slides=[...document.querySelectorAll(".uno-tutorial-slide")];
+ const stepText=$("unoTutorialStep"),dots=$("unoTutorialDots");
+ const next=$("unoTutorialNext"),close=$("unoTutorialClose");
+ let step=0;
+ function render(){
+  slides.forEach((s,i)=>s.classList.toggle("hidden",i!==step));
+  stepText.textContent=`${step+1} / ${slides.length}`;
+  dots.innerHTML=slides.map((_,i)=>`<i class="${i===step?"active":""}"></i>`).join("");
+  next.textContent=step===slides.length-1?"Mulai Main":"Lanjut";
+ }
+ function open(){step=0;render();modal.classList.remove("hidden")}
+ function shut(){modal.classList.add("hidden");localStorage.setItem(UNO_TUTORIAL_KEY,"1")}
+ next.onclick=()=>{if(step<slides.length-1){step++;render()}else shut()};
+ close.onclick=shut;
+ modal.addEventListener("click",e=>{if(e.target===modal)shut()});
+ $("howToPlayBtn").onclick=open;
+ $("lobbyHelpBtn").onclick=open;
+ $("gameHelpBtn").onclick=open;
+ if(localStorage.getItem(UNO_TUTORIAL_KEY)!=="1")setTimeout(open,300);
+}
+initUnoTutorial();
+
+window.addEventListener("online",async()=>{setConnection(false,"Menyambung...");if(roomCode){await refreshGameState();await subscribe();await safeRoute()}});
+window.addEventListener("offline",()=>setConnection(false,"Offline"));
+document.addEventListener("visibilitychange",async()=>{
+ if(document.visibilityState==="visible"&&roomCode){
+  await refreshGameState();await safeRoute();
+ }
+});
 
 async function restore(){
  const raw=localStorage.getItem(STORE);if(!raw)return false;
