@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#07111f">
+  <title>Room Test • Game Alpi</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <section class="card">
+      <a class="back-link" href="../">← Kembali ke Game Alpi</a>
+
+      <div id="connectionBadge" class="connection-badge">
+        <span class="connection-dot"></span>
+        <span id="connectionText">Menghubungkan Supabase...</span>
+      </div>
+
+      <div id="setupScreen">
+        <p class="eyebrow">SUPABASE MULTIPLAYER TEST</p>
+        <h1>Room Test</h1>
+        <p class="subtitle">Buat room di satu HP, lalu gabung menggunakan kode yang sama dari HP lain.</p>
+
+        <label class="label" for="playerName">Nama pemain</label>
+        <input id="playerName" class="text-input" maxlength="20" autocomplete="nickname" placeholder="Contoh: Alfi">
+
+        <button id="createRoomBtn" class="primary-btn"><span>＋</span>Buat Room Baru</button>
+
+        <div class="divider"><span>ATAU</span></div>
+
+        <label class="label" for="roomCodeInput">Kode room</label>
+        <input id="roomCodeInput" class="text-input code-input" maxlength="6" inputmode="numeric" placeholder="123456">
+
+        <button id="joinRoomBtn" class="secondary-btn">Gabung Room <span>→</span></button>
+        <p id="setupMessage" class="form-message"></p>
+      </div>
+
+      <div id="lobbyScreen" class="hidden">
+        <div class="lobby-head">
+          <div>
+            <p class="eyebrow">ROOM AKTIF</p>
+            <h1>Lobby</h1>
+          </div>
+          <span id="hostBadge" class="host-badge hidden">HOST</span>
+        </div>
+
+        <div class="room-code-card">
+          <span>KODE ROOM</span>
+          <strong id="roomCodeDisplay">------</strong>
+          <button id="copyCodeBtn" class="copy-btn">Salin Kode</button>
+        </div>
+
+        <div class="players-header">
+          <div>
+            <span class="label-small">PEMAIN TERHUBUNG</span>
+            <strong id="playerCount">0 pemain</strong>
+          </div>
+          <span class="live-pill"><i></i> Realtime</span>
+        </div>
+
+        <div id="playersList" class="players-list"></div>
+
+        <div class="info-box">
+          <strong>Uji dari 2 HP</strong>
+          <p>Buka Game Alpi di HP kedua, masuk ke Room Test, lalu gabung menggunakan kode di atas.</p>
+        </div>
+
+        <p id="lobbyMessage" class="form-message"></p>
+        <button id="leaveRoomBtn" class="danger-btn">Keluar dari Room</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="script.js"></script>
+</body>
+</html>

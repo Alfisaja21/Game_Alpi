@@ -1,38 +1,24 @@
-GAME ALPI V2
+GAME ALPI V3 — ROOM TEST
 
-ISI:
-1. Tap Target
-2. Tebak Angka
-3. Impostor (Coming Soon)
+Tambahan baru:
+- room-test/index.html
+- room-test/style.css
+- room-test/script.js
 
-STRUKTUR:
-- index.html
-- style.css
-- tap-target/
-  - index.html
-  - style.css
-  - script.js
-- tebak-angka/
-  - index.html
-  - style.css
-  - script.js
+Cara update GitHub:
+1. Ganti index.html di root repository dengan file V3.
+2. Ganti style.css di root repository dengan file V3.
+3. Buat folder baru bernama room-test.
+4. Upload 3 file dari folder room-test.
+5. Commit changes.
+6. Tunggu Vercel redeploy.
+7. Buka https://game-alpi.vercel.app/room-test/
 
-CARA UPDATE REPOSITORY GITHUB YANG SUDAH ADA:
-1. Ganti file index.html di root dengan versi baru.
-2. File style.css root boleh tetap memakai yang lama karena masih kompatibel.
-3. Ganti tap-target/index.html dan tap-target/style.css dengan versi baru
-   agar tombol "Kembali ke Game Alpi" muncul.
-4. Buat folder baru: tebak-angka
-5. Upload tiga file dari folder tebak-angka:
-   index.html, style.css, script.js
-6. Commit changes.
-7. Tunggu Vercel redeploy otomatis.
-8. Buka domain Vercel dan refresh.
+Cara test:
+HP 1: isi nama → Buat Room Baru → catat kode.
+HP 2: isi nama lain → masukkan kode → Gabung Room.
 
-URL:
-- Portal: / 
-- Tap Target: /tap-target/
-- Tebak Angka: /tebak-angka/
+Jika berhasil, kedua nama muncul di kedua HP tanpa refresh.
 
-CATATAN:
-Tidak perlu membuat repository GitHub atau project Vercel baru.
+Catatan:
+RLS saat ini sengaja sederhana untuk latihan. Nanti akan diperketat sebelum Impostor final.
