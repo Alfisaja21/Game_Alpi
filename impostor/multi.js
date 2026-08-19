@@ -15,6 +15,18 @@ function normName(v){return v.trim().replace(/\s+/g,' ').slice(0,20)}function no
 function hideScreens(){Object.values(screens).forEach(x=>x.classList.add('hidden'))}function showScreen(name){hideScreens();screens[name].classList.remove('hidden');currentPhase=name}
 function setConnection(ok,text){$('connectionBadge').classList.remove('connected','error');$('connectionBadge').classList.add(ok?'connected':'error');$('connectionText').textContent=text}
 function saveSession(){localStorage.setItem(STORAGE_KEY,JSON.stringify({roomCode:currentRoomCode,playerId:currentPlayerId,playerToken:currentPlayerToken,playerName:currentPlayerName,isHost:currentIsHost}))}function clearSession(){localStorage.removeItem(STORAGE_KEY)}
+function resetSessionState(){
+ clearSession();
+ currentRoomCode=null;
+ currentPlayerId=null;
+ currentPlayerToken=null;
+ currentPlayerName=null;
+ currentIsHost=false;
+ currentRoom=null;
+ currentPhase='setup';
+ selectedVoteId=null;
+}
+
 function selectedCategories(){return [...document.querySelectorAll('#categoryGrid input:checked')].map(x=>x.value)}
 function setCategories(vals){const s=new Set(vals||[]);document.querySelectorAll('#categoryGrid input').forEach(x=>x.checked=s.has(x.value));updateCategorySummary()}
 function updateCategorySummary(){const n=selectedCategories().length;$('categorySummary').textContent=n?`${n} kategori aktif`:'Tidak ada kategori'}
@@ -134,13 +146,61 @@ async function continueGame(){const {error}=await db.rpc('impostor_continue_matc
 async function nextGame(){const {error}=await db.rpc('impostor_reset_lobby',{p_room_code:currentRoomCode,p_player_id:currentPlayerId,p_player_token:currentPlayerToken});if(error)$('resultMessage').textContent=error.message}
 async function finishMatch(){const {error}=await db.rpc('impostor_finish_match',{p_room_code:currentRoomCode,p_player_id:currentPlayerId,p_player_token:currentPlayerToken});if(error){$('resultMessage').textContent=error.message;$('lobbyMessage').textContent=error.message}}
 async function leaveRoom(){if(currentPlayerId&&currentPlayerToken)await db.rpc('impostor_leave_room',{p_player_id:currentPlayerId,p_player_token:currentPlayerToken});await unsubscribe();clearSession();currentRoomCode=currentPlayerId=currentPlayerToken=currentPlayerName=null;currentIsHost=false;showScreen('setup')}
-async function restore(){const raw=localStorage.getItem(STORAGE_KEY);if(!raw)return;try{const s=JSON.parse(raw);currentRoomCode=s.roomCode;currentPlayerId=s.playerId;currentPlayerToken=s.playerToken;currentPlayerName=s.playerName;currentIsHost=s.isHost;if(currentRoomCode&&currentPlayerId&&currentPlayerToken)await enterRoom()}catch{clearSession()}}
+async function restore(){
+ const raw=localStorage.getItem(STORAGE_KEY);
+ if(!raw)return;
+ try{
+  const s=JSON.parse(raw);
+  currentRoomCode=s.roomCode;
+  currentPlayerId=s.playerId;
+  currentPlayerToken=s.playerToken;
+  currentPlayerName=s.playerName;
+  currentIsHost=s.isHost;
+
+  if(!currentRoomCode||!currentPlayerId||!currentPlayerToken)return;
+
+  const fromMode=new URLSearchParams(location.search).get('from')==='mode';
+
+  if(fromMode){
+   const savedRoom=await loadRoom();
+
+   // Masuk dari menu Multi HP + match lama sudah selesai:
+   // jangan restore Hasil Akhir, mulai dari setup baru.
+   if(savedRoom?.game_phase==='finished'){
+    resetSessionState();
+    showScreen('setup');
+    $('setupMessage').textContent='Pertandingan sebelumnya sudah selesai. Buat atau gabung room baru.';
+    history.replaceState({},'',location.pathname);
+    return
+   }
+
+   // Room sudah terhapus / cleanup.
+   if(!savedRoom){
+    resetSessionState();
+    showScreen('setup');
+    history.replaceState({},'',location.pathname);
+    return
+   }
+  }
+
+  await enterRoom()
+ }catch{
+  resetSessionState();
+  showScreen('setup')
+ }
+}
 
 $('createRoomBtn').onclick=createRoom;$('joinRoomBtn').onclick=joinRoom;$('roomCodeInput').oninput=()=>$('roomCodeInput').value=normCode($('roomCodeInput').value);$('minusImpostorBtn').onclick=async()=>{if(impostorCount>1)impostorCount--;updateImp((await loadPlayers()).filter(p=>p.is_alive!==false).length)};$('plusImpostorBtn').onclick=async()=>{impostorCount++;updateImp((await loadPlayers()).filter(p=>p.is_alive!==false).length)};
 $('selectAllCategoriesBtn').onclick=()=>setCategories(ALL_CATEGORIES);$('clearAllCategoriesBtn').onclick=()=>setCategories([]);document.querySelectorAll('#categoryGrid input').forEach(x=>x.onchange=updateCategorySummary);
 $('knowsYesBtn').onclick=()=>{impostorKnows=true;syncSettings()};$('knowsNoBtn').onclick=()=>{impostorKnows=false;clueCount=1;syncSettings()};$('minusClueBtn').onclick=()=>{clueCount=Math.max(1,clueCount-1);syncSettings()};$('plusClueBtn').onclick=()=>{clueCount=Math.min(3,clueCount+1);syncSettings()};$('showCatYesBtn').onclick=()=>{showCategoryToImpostor=true;syncSettings()};$('showCatNoBtn').onclick=()=>{showCategoryToImpostor=false;syncSettings()};$('scoreYesBtn').onclick=()=>{scoreEnabled=true;syncSettings()};$('scoreNoBtn').onclick=()=>{scoreEnabled=false;syncSettings()};$('difficultySelect').onchange=e=>difficulty=e.target.value;$('discussionTimerSelect').onchange=e=>discussionSeconds=Number(e.target.value);$('tieRuleSelect').onchange=e=>tieRule=e.target.value;$('matchTargetSelect').onchange=e=>matchTarget=Number(e.target.value);
 $('impAddBotBtn').onclick=()=>addImpBots(1);$('impAdd5BotBtn').onclick=()=>addImpBots(5);$('impRemoveBotsBtn').onclick=removeImpBots;
 $('impBotSpeed').onchange=e=>localStorage.setItem("gameAlpiImpBotSpeed",e.target.value);if(localStorage.getItem("gameAlpiImpBotSpeed"))$('impBotSpeed').value=localStorage.getItem("gameAlpiImpBotSpeed");
+$('backModeBtn').onclick=async e=>{
+ e.preventDefault();
+ await unsubscribe();
+ resetSessionState();
+ location.href='index.html'
+};
 $('startGameBtn').onclick=startGame;$('seenBtn').onclick=markSeen;$('startVotingBtn').onclick=startVoting;$('submitVoteBtn').onclick=submitVote;$('continueGameBtn').onclick=continueGame;$('playAgainBtn').onclick=nextGame;$('finishMatchBtn').onclick=finishMatch;$('finishLobbyBtn').onclick=finishMatch;$('leaveRoomBtn').onclick=leaveRoom;$('refreshScoreBtn').onclick=()=>loadScore($('lobbyScoreboard'));
 $('copyCodeBtn').onclick=async()=>{try{await navigator.clipboard.writeText(currentRoomCode);$('copyCodeBtn').textContent='Tersalin ✓';setTimeout(()=>$('copyCodeBtn').textContent='Salin',1200)}catch{}};$('showQrBtn').onclick=toggleQr;$('copyJoinLinkBtn').onclick=async()=>{try{await navigator.clipboard.writeText(joinUrl());$('copyJoinLinkBtn').textContent='Link tersalin ✓';setTimeout(()=>$('copyJoinLinkBtn').textContent='Salin Link Join',1200)}catch{}};
 
