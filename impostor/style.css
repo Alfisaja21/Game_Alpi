@@ -126,3 +126,209 @@
 /* V11 final polish */
 *,*::before,*::after{box-sizing:border-box}.app,.card,section,.player-row,.player-left,.player-text,.result-info,.setting-box{min-width:0}.card{width:min(100%,680px);overflow:hidden}.subtitle,.player-name,.score-name,.result-info strong,.secret-box strong,.result-hero strong,.history-meta strong{overflow-wrap:anywhere;word-break:break-word}.room-code-card{gap:10px}.room-code-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}.qr-panel{display:grid;justify-items:center;gap:10px;margin:12px 0 18px;padding:16px;border:1px solid rgba(148,163,184,.12);border-radius:16px;background:#fff;color:#0f172a}.qr-panel p{margin:0;color:#475569;font-size:11px;text-align:center}.player-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end}.kick-btn{padding:6px 9px;border:1px solid rgba(248,113,113,.24);border-radius:9px;color:#fecaca;background:rgba(127,29,29,.16);cursor:pointer;font-size:10px;font-weight:850}.advanced-settings{margin-top:14px;border:1px solid rgba(148,163,184,.12);border-radius:16px;background:#0d1728;overflow:hidden}.advanced-settings>summary{padding:14px 15px;color:#bfdbfe;cursor:pointer;font-size:12px;font-weight:900}.advanced-settings .game-settings-grid{padding:0 12px 12px;margin:0}.setting-select{width:100%;max-width:100%;margin-top:8px;padding:10px 11px;border:1px solid rgba(148,163,184,.13);border-radius:10px;color:#e2e8f0;background:#0b1423;font:inherit;font-size:11px}.segmented{min-width:0}.segment{min-width:0;white-space:normal;overflow-wrap:anywhere}.discussion-timer{display:inline-block;margin:16px 0 4px;padding:9px 13px;border-radius:999px;color:#bfdbfe;background:#17243a;font-size:14px;font-weight:900;font-variant-numeric:tabular-nums}.discussion-timer.expired{color:#fecaca;background:rgba(127,29,29,.24)}.game-settings-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.category-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.category-option span{min-width:0;overflow-wrap:anywhere}.stepper{flex-shrink:0}.primary-btn,.secondary-btn,.danger-btn,.start-btn{max-width:100%;white-space:normal}.final-link{display:block;text-align:center;text-decoration:none}.result-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 @media(max-width:560px){.card{padding-left:16px!important;padding-right:16px!important}.game-settings-grid,.category-grid,.result-grid{grid-template-columns:1fr}.category-head,.control-head{align-items:stretch}.category-actions{width:100%}.category-actions .tiny-btn{flex:1}.segmented{grid-template-columns:1fr 1fr}.player-row{align-items:flex-start}.player-actions{max-width:42%}.room-code-card strong{font-size:clamp(30px,12vw,48px)!important}.secret-box strong{font-size:clamp(28px,10vw,46px)!important}.result-hero strong{font-size:clamp(28px,10vw,46px)!important}}
+
+
+/* =========================================================
+   FINAL UI CLEANUP
+   ========================================================= */
+html,body{max-width:100%;overflow-x:hidden}
+.card{overflow:hidden}
+h1,h2,h3,p,strong,span{max-width:100%}
+
+.primary-identity-setting{
+  margin-top:14px;
+  padding:14px;
+  border:1px solid rgba(96,165,250,.18);
+  border-radius:16px;
+  background:linear-gradient(135deg,rgba(37,99,235,.07),rgba(15,23,42,.25)),#111c2d;
+}
+
+.advanced-settings{
+  margin-top:12px;
+}
+.advanced-settings>summary{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  list-style:none;
+  user-select:none;
+}
+.advanced-settings>summary::-webkit-details-marker{display:none}
+.advanced-settings>summary::after{
+  content:"＋";
+  flex:0 0 auto;
+  color:#60a5fa;
+  font-size:17px;
+  font-weight:900;
+  transition:transform .16s ease;
+}
+.advanced-settings[open]>summary::after{
+  content:"−";
+}
+.advanced-settings[open]>summary{
+  border-bottom:1px solid rgba(148,163,184,.08);
+}
+
+.setting-label-with-help{
+  display:flex!important;
+  align-items:center;
+  gap:6px;
+  width:max-content;
+  max-width:100%;
+  margin-bottom:5px!important;
+}
+.help-icon{
+  display:inline-grid;
+  place-items:center;
+  width:18px;
+  height:18px;
+  flex:0 0 18px;
+  padding:0;
+  border:1px solid rgba(96,165,250,.35);
+  border-radius:50%;
+  color:#93c5fd;
+  background:rgba(37,99,235,.10);
+  cursor:help;
+  font:700 11px/1 system-ui,sans-serif;
+}
+.help-icon:hover,
+.help-icon:focus-visible,
+.help-icon.active{
+  color:#fff;
+  border-color:#60a5fa;
+  background:rgba(37,99,235,.35);
+  outline:none;
+}
+
+.help-popover{
+  position:fixed;
+  z-index:99999;
+  width:max-content;
+  max-width:min(320px,calc(100vw - 24px));
+  padding:11px 12px;
+  border:1px solid rgba(96,165,250,.30);
+  border-radius:12px;
+  color:#dbeafe;
+  background:#0b1423;
+  box-shadow:0 14px 45px rgba(0,0,0,.50);
+  font-size:11px;
+  line-height:1.55;
+  text-align:left;
+  pointer-events:none;
+}
+.help-popover::before{
+  content:"";
+  position:absolute;
+  top:-5px;
+  left:var(--arrow-left,50%);
+  width:9px;
+  height:9px;
+  border-left:1px solid rgba(96,165,250,.30);
+  border-top:1px solid rgba(96,165,250,.30);
+  background:#0b1423;
+  transform:translateX(-50%) rotate(45deg);
+}
+.help-popover.above::before{
+  top:auto;
+  bottom:-5px;
+  transform:translateX(-50%) rotate(225deg);
+}
+
+.setting-box,
+.primary-identity-setting,
+.category-section,
+.advanced-settings,
+.result-info,
+.vote-option,
+.player-row{
+  max-width:100%;
+  min-width:0;
+}
+.setting-select,
+.text-input,
+.segmented,
+.segment,
+.stepper,
+.control-head>div{
+  min-width:0;
+}
+.setting-select{
+  text-overflow:ellipsis;
+}
+.control-head{
+  flex-wrap:wrap;
+}
+.control-head>div:first-child{
+  flex:1 1 190px;
+}
+.stepper{
+  max-width:100%;
+}
+.secret-box,
+.result-hero,
+.result-info{
+  overflow:hidden;
+}
+.secret-box strong,
+.result-hero strong,
+.result-info strong,
+.role-card p,
+.setting-help{
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+.category-option span,
+.segment,
+.primary-btn,
+.secondary-btn,
+.danger-btn,
+.start-btn,
+.copy-btn,
+.tiny-btn{
+  overflow-wrap:anywhere;
+}
+.player-row{
+  overflow:hidden;
+}
+.player-left{
+  flex:1 1 auto;
+}
+.player-actions{
+  flex:0 1 auto;
+}
+.room-code-card{
+  overflow:hidden;
+}
+
+@media(max-width:560px){
+  .app{padding:10px}
+  .card{
+    width:100%;
+    padding:15px!important;
+    border-radius:20px;
+  }
+  h1{font-size:clamp(32px,11vw,46px)}
+  .host-controls{padding:12px}
+  .category-section,
+  .primary-identity-setting,
+  .setting-box{padding:12px}
+  .advanced-settings .game-settings-grid{
+    padding:0 10px 10px;
+  }
+  .control-head{
+    align-items:center!important;
+  }
+  .control-head>div:first-child{
+    flex:1 1 150px;
+  }
+  .stepper{
+    margin-left:auto;
+  }
+  .setting-label-with-help{
+    width:auto;
+  }
+  .help-icon{
+    cursor:pointer;
+  }
+}

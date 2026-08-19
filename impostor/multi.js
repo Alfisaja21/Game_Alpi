@@ -79,3 +79,117 @@ $('copyCodeBtn').onclick=async()=>{try{await navigator.clipboard.writeText(curre
 
 async function boot(){syncSettings();updateCategorySummary();try{await db.rpc('impostor_cleanup_rooms');setConnection(true,'Supabase terhubung')}catch{setConnection(false,'Supabase belum siap V11')}const q=new URLSearchParams(location.search).get('room');if(q)$('roomCodeInput').value=normCode(q);await restore()}
 boot();
+
+
+function initHelpTips() {
+  const pop = document.getElementById("helpPopover");
+  if (!pop) return;
+
+  let active = null;
+  let pinned = false;
+  let hoverTimer = null;
+
+  function position(btn) {
+    if (!active || pop.classList.contains("hidden")) return;
+    const rect = btn.getBoundingClientRect();
+    const margin = 12;
+    const gap = 8;
+
+    pop.style.left = "0px";
+    pop.style.top = "0px";
+    pop.classList.remove("above");
+
+    const pw = Math.min(pop.offsetWidth, window.innerWidth - margin * 2);
+    const ph = pop.offsetHeight;
+
+    let left = rect.left + rect.width / 2 - pw / 2;
+    left = Math.max(margin, Math.min(left, window.innerWidth - pw - margin));
+
+    let top = rect.bottom + gap;
+    let above = false;
+    if (top + ph > window.innerHeight - margin) {
+      top = rect.top - ph - gap;
+      above = true;
+    }
+    top = Math.max(margin, top);
+
+    const arrow = Math.max(12, Math.min(rect.left + rect.width / 2 - left, pw - 12));
+    pop.style.setProperty("--arrow-left", `${arrow}px`);
+    pop.style.left = `${left}px`;
+    pop.style.top = `${top}px`;
+    pop.classList.toggle("above", above);
+  }
+
+  function show(btn, shouldPin = false) {
+    clearTimeout(hoverTimer);
+    document.querySelectorAll(".help-icon.active").forEach(x => {
+      if (x !== btn) x.classList.remove("active");
+    });
+
+    active = btn;
+    pinned = shouldPin;
+    btn.classList.toggle("active", pinned);
+
+    pop.textContent = btn.dataset.help || "";
+    pop.classList.remove("hidden");
+    requestAnimationFrame(() => position(btn));
+  }
+
+  function hide(force = false) {
+    if (pinned && !force) return;
+    clearTimeout(hoverTimer);
+    if (active) active.classList.remove("active");
+    active = null;
+    pinned = false;
+    pop.classList.add("hidden");
+  }
+
+  document.querySelectorAll(".help-icon").forEach(btn => {
+    btn.addEventListener("mouseenter", () => {
+      if (!pinned) show(btn, false);
+    });
+    btn.addEventListener("mouseleave", () => {
+      if (!pinned) hoverTimer = setTimeout(() => hide(true), 80);
+    });
+    btn.addEventListener("focus", () => {
+      if (!pinned) show(btn, false);
+    });
+    btn.addEventListener("blur", () => {
+      if (!pinned) hide(true);
+    });
+    btn.addEventListener("click", e => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (active === btn && pinned) {
+        hide(true);
+      } else {
+        show(btn, true);
+      }
+    });
+  });
+
+  document.addEventListener("click", e => {
+    if (pinned && !e.target.closest(".help-icon")) hide(true);
+  });
+
+  window.addEventListener("resize", () => {
+    if (active) position(active);
+  });
+  window.addEventListener("scroll", () => {
+    if (active && pinned) position(active);
+    else if (active) hide(true);
+  }, true);
+}
+
+function initAdvancedSettingsState(id, key) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const saved = localStorage.getItem(key);
+  el.open = saved === "1";
+  el.addEventListener("toggle", () => {
+    localStorage.setItem(key, el.open ? "1" : "0");
+  });
+}
+
+initHelpTips();
+initAdvancedSettingsState("advancedSettings","gameAlpiAdvancedMultiOpen");
