@@ -332,3 +332,15 @@ h1,h2,h3,p,strong,span{max-width:100%}
     cursor:pointer;
   }
 }
+
+.first-speaker-box{
+  margin:12px 0 4px;
+  padding:11px 12px;
+  border:1px solid rgba(96,165,250,.2);
+  border-radius:12px;
+  color:#bfdbfe;
+  background:rgba(37,99,235,.08);
+  font-size:12px;
+  line-height:1.45;
+}
+.first-speaker-box strong{color:#fff;overflow-wrap:anywhere}

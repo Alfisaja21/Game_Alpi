@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta name="theme-color" content="#07111f">
+  <title>Color Clash • Game Alpi</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="app">
+<section class="shell">
+  <a class="back-link" href="../">← Kembali ke Game Alpi</a>
+  <div class="connection" id="connectionBadge"><i></i><span id="connectionText">Menghubungkan...</span></div>
+
+  <section id="setupScreen">
+    <p class="eyebrow">MULTIPLAYER • 2–20 PEMAIN</p>
+    <h1>Color Clash</h1>
+    <p class="subtitle">Cocokkan warna atau simbol, gunakan kartu aksi, dan jadilah pemain pertama yang menghabiskan kartu.</p>
+
+    <label class="label">Nama pemain</label>
+    <input id="playerName" class="input" maxlength="20" placeholder="Contoh: Alfi">
+    <button id="createRoomBtn" class="btn primary">＋ Buat Room</button>
+
+    <div class="divider"><span>ATAU</span></div>
+
+    <label class="label">Kode room</label>
+    <input id="roomCodeInput" class="input code" maxlength="6" inputmode="numeric" placeholder="123456">
+    <button id="joinRoomBtn" class="btn secondary">Gabung Room →</button>
+    <p id="setupMessage" class="message"></p>
+  </section>
+
+  <section id="lobbyScreen" class="hidden">
+    <div class="title-row"><div><p class="eyebrow">LOBBY</p><h1>Siap Clash?</h1></div><span id="hostBadge" class="host-badge hidden">HOST</span></div>
+
+    <div class="room-box">
+      <span>KODE ROOM</span>
+      <strong id="roomCodeDisplay">------</strong>
+      <div class="room-actions"><button id="copyCodeBtn">Salin</button><button id="showQrBtn">QR</button></div>
+    </div>
+
+    <div id="qrPanel" class="qr-panel hidden"><div id="qrcode"></div><p>Scan lalu masukkan nama pemain.</p></div>
+
+    <div class="players-head"><strong id="playerCount">0 pemain</strong><span>2–20 pemain</span></div>
+    <div id="playersList" class="players-list"></div>
+
+    <div id="hostControls" class="host-controls hidden">
+      <div class="main-setting">
+        <div><span class="setting-label">STACKING +2 / +4 <button class="help" data-help="Jika aktif, +2 hanya dapat ditumpuk dengan +2 dan +4 hanya dengan +4.">?</button></span><small>Aturan custom paling umum.</small></div>
+        <div class="segmented"><button id="stackOffBtn" class="segment active">OFF</button><button id="stackOnBtn" class="segment">ON</button></div>
+      </div>
+
+      <details id="advancedSettings" class="advanced">
+        <summary>⚙ Pengaturan Lanjutan</summary>
+        <div class="settings-grid">
+          <div class="setting-card"><span class="setting-label">Jump-In <button class="help" data-help="Saat bukan giliranmu, kamu boleh langsung memainkan kartu yang sama persis dengan kartu atas.">?</button></span><div class="segmented"><button id="jumpOffBtn" class="segment active">OFF</button><button id="jumpOnBtn" class="segment">ON</button></div></div>
+          <div class="setting-card"><span class="setting-label">7–0 Rule <button class="help" data-help="Kartu 7 menukar tangan dengan pemain pilihan. Kartu 0 memutar semua tangan mengikuti arah permainan.">?</button></span><div class="segmented"><button id="sevenOffBtn" class="segment active">OFF</button><button id="sevenOnBtn" class="segment">ON</button></div></div>
+          <div class="setting-card"><span class="setting-label">Draw Until Playable <button class="help" data-help="OFF: ambil 1 lalu giliran selesai. ON: terus mengambil sampai mendapat kartu yang bisa dimainkan, lalu giliran tetap milikmu.">?</button></span><div class="segmented"><button id="drawUntilOffBtn" class="segment active">OFF</button><button id="drawUntilOnBtn" class="segment">ON</button></div></div>
+          <div class="setting-card"><span class="setting-label">Challenge +4 <button class="help" data-help="Pemain yang terkena +4 boleh menantang. Jika +4 dimainkan secara ilegal, pemberi +4 mendapat penalti.">?</button></span><div class="segmented"><button id="challengeOffBtn" class="segment active">OFF</button><button id="challengeOnBtn" class="segment">ON</button></div></div>
+          <div class="setting-card"><span class="setting-label">Timer Giliran <button class="help" data-help="Jika waktu habis, sistem otomatis mengambil kartu/penalti dan melewati giliran pemain.">?</button></span><select id="turnTimerSelect"><option value="0">Tanpa batas</option><option value="15">15 detik</option><option value="30">30 detik</option><option value="60">60 detik</option></select></div>
+          <div class="setting-card"><span class="setting-label">Penalti UNO <button class="help" data-help="Saat tersisa 1 kartu, tekan UNO!. Jika lupa dan pemain lain menekan TANGKAP! lebih dulu, kamu mengambil 2 kartu.">?</button></span><div class="segmented"><button id="unoOffBtn" class="segment">OFF</button><button id="unoOnBtn" class="segment active">ON</button></div></div>
+        </div>
+      </details>
+
+      <button id="startGameBtn" class="btn start">Mulai Color Clash</button>
+      <p id="lobbyMessage" class="message"></p>
+    </div>
+
+    <button id="leaveRoomBtn" class="btn danger">Keluar Room</button>
+  </section>
+
+  <section id="gameScreen" class="hidden game-screen">
+    <div class="game-top">
+      <div><p class="eyebrow">COLOR CLASH</p><h2 id="turnTitle">Menunggu giliran...</h2></div>
+      <div class="timer-pill" id="turnTimer">∞</div>
+    </div>
+
+    <div class="game-meta">
+      <span>Room <b id="gameRoomCode">------</b></span>
+      <span id="directionText">Arah →</span>
+      <span id="activeColorText">Warna: -</span>
+    </div>
+
+    <div id="pendingBanner" class="pending hidden"></div>
+    <div id="challengePanel" class="challenge-panel hidden">
+      <strong>Kamu terkena Wild +4</strong>
+      <p>Mau menerima +4 atau menantang pemain sebelumnya?</p>
+      <div class="challenge-actions"><button id="acceptWild4Btn" class="btn secondary">Terima +4</button><button id="challengeWild4Btn" class="btn danger">Challenge!</button></div>
+    </div>
+
+    <div class="table-zone">
+      <div class="deck-wrap">
+        <button id="drawBtn" class="deck-card" aria-label="Ambil kartu"><span>CC</span><small>DRAW</small></button>
+      </div>
+      <div id="topCard" class="clash-card top-card wild"><span class="card-corner">CC</span><strong>?</strong><span class="card-caption">COLOR CLASH</span></div>
+    </div>
+
+    <div id="playersGameList" class="players-game"></div>
+
+    <div class="action-row">
+      <button id="unoBtn" class="uno-btn">UNO!</button>
+      <button id="catchBtn" class="catch-btn hidden">TANGKAP!</button>
+    </div>
+
+    <div class="hand-head"><div><span>KARTUMU</span><strong id="handCount">0 kartu</strong></div><p id="gameMessage"></p></div>
+    <div id="hand" class="hand"></div>
+  </section>
+
+  <section id="resultScreen" class="hidden">
+    <p class="eyebrow">GAME SELESAI</p>
+    <h1>🏆 <span id="winnerName">Pemenang</span></h1>
+    <div class="winner-box"><p>Pemain pertama yang menghabiskan seluruh kartu.</p></div>
+    <button id="backLobbyBtn" class="btn primary hidden">Kembali ke Lobby</button>
+    <p id="resultHint" class="message">Tunggu host memulai game berikutnya.</p>
+  </section>
+</section>
+</main>
+
+<div id="colorModal" class="modal hidden">
+  <div class="modal-card"><h3>Pilih Warna</h3><div class="color-grid"><button data-color="red" class="color-choice red"></button><button data-color="yellow" class="color-choice yellow"></button><button data-color="green" class="color-choice green"></button><button data-color="blue" class="color-choice blue"></button></div><button data-close-modal class="modal-cancel">Batal</button></div>
+</div>
+
+<div id="swapModal" class="modal hidden">
+  <div class="modal-card"><h3>Tukar Kartu dengan Siapa?</h3><div id="swapPlayers" class="swap-list"></div><button data-close-modal class="modal-cancel">Batal</button></div>
+</div>
+
+<div id="helpPopover" class="help-popover hidden"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
