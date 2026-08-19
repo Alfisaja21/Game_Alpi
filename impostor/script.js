@@ -4,11 +4,16 @@ const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
 const $ = (id) => document.getElementById(id);
 
-const setupScreen = $("setupScreen");
-const lobbyScreen = $("lobbyScreen");
-const revealScreen = $("revealScreen");
-const waitingScreen = $("waitingScreen");
-const discussionScreen = $("discussionScreen");
+const screens = {
+  setup: $("setupScreen"),
+  lobby: $("lobbyScreen"),
+  reveal: $("revealScreen"),
+  waiting: $("waitingScreen"),
+  discussion: $("discussionScreen"),
+  voting: $("votingScreen"),
+  voteWaiting: $("voteWaitingScreen"),
+  result: $("resultScreen")
+};
 
 const playerNameInput = $("playerName");
 const roomCodeInput = $("roomCodeInput");
@@ -40,8 +45,28 @@ const roleDescription = $("roleDescription");
 const seenBtn = $("seenBtn");
 const revealMessage = $("revealMessage");
 const seenProgress = $("seenProgress");
+
 const discussionRoomCode = $("discussionRoomCode");
-const resetLobbyBtn = $("resetLobbyBtn");
+const startVotingBtn = $("startVotingBtn");
+const discussionHint = $("discussionHint");
+const discussionMessage = $("discussionMessage");
+
+const voteOptions = $("voteOptions");
+const submitVoteBtn = $("submitVoteBtn");
+const voteMessage = $("voteMessage");
+const voteProgress = $("voteProgress");
+
+const winnerTitle = $("winnerTitle");
+const eliminationCard = $("eliminationCard");
+const resultSmallLabel = $("resultSmallLabel");
+const eliminatedName = $("eliminatedName");
+const eliminatedDetail = $("eliminatedDetail");
+const resultSecretWord = $("resultSecretWord");
+const resultImpostors = $("resultImpostors");
+const voteTotals = $("voteTotals");
+const playAgainBtn = $("playAgainBtn");
+const resultHostHint = $("resultHostHint");
+const resultMessage = $("resultMessage");
 
 let currentRoomCode = null;
 let currentPlayerId = null;
@@ -49,36 +74,37 @@ let currentPlayerToken = null;
 let currentPlayerName = null;
 let currentIsHost = false;
 let impostorCount = 1;
+let selectedVoteId = null;
 let roomChannel = null;
 let playerChannel = null;
 
-const STORAGE_KEY = "gameAlpiImpostorV5";
+const STORAGE_KEY = "gameAlpiImpostorV6";
 
 function hideScreens() {
-  [setupScreen,lobbyScreen,revealScreen,waitingScreen,discussionScreen].forEach(el => el.classList.add("hidden"));
+  Object.values(screens).forEach(el => el.classList.add("hidden"));
 }
 
 function setConnection(ok, text) {
-  connectionBadge.classList.remove("connected","error");
+  connectionBadge.classList.remove("connected", "error");
   connectionBadge.classList.add(ok ? "connected" : "error");
   connectionText.textContent = text;
 }
 
 function normalizeName(v) {
-  return v.trim().replace(/\s+/g," ").slice(0,20);
+  return v.trim().replace(/\s+/g, " ").slice(0, 20);
 }
 
 function normalizeCode(v) {
-  return v.replace(/\D/g,"").slice(0,6);
+  return v.replace(/\D/g, "").slice(0, 6);
 }
 
 function escapeHtml(v) {
   return String(v)
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
 function saveSession() {
@@ -102,8 +128,7 @@ function maxImpostors(playerTotal) {
 
 function updateImpostorControls(totalPlayers) {
   const max = maxImpostors(totalPlayers);
-  impostorCount = Math.min(impostorCount, max);
-  impostorCount = Math.max(1, impostorCount);
+  impostorCount = Math.max(1, Math.min(impostorCount, max));
   impostorCountDisplay.textContent = impostorCount;
   impostorHelp.textContent = `${impostorCount} impostor dari ${totalPlayers} pemain`;
   minusImpostorBtn.disabled = impostorCount <= 1;
@@ -116,28 +141,32 @@ async function loadPlayers() {
 
   const { data, error } = await db
     .from("players")
-    .select("id,player_name,is_host,role_seen,created_at")
+    .select("id,player_name,is_host,role_seen,vote_submitted,created_at")
     .eq("room_code", currentRoomCode)
-    .order("created_at", {ascending:true});
+    .order("created_at", { ascending: true });
 
   if (error) return [];
 
   playerCount.textContent = `${data.length} pemain`;
+
   playersList.innerHTML = data.map(p => `
     <div class="player-row">
       <div class="player-left">
-        <div class="avatar">${escapeHtml((p.player_name||"?")[0].toUpperCase())}</div>
+        <div class="avatar">${escapeHtml((p.player_name || "?")[0].toUpperCase())}</div>
         <div>
           <div class="player-name">${escapeHtml(p.player_name)}</div>
-          ${String(p.id)===String(currentPlayerId) ? '<div class="you">Kamu</div>' : ''}
+          ${String(p.id) === String(currentPlayerId) ? '<div class="you">Kamu</div>' : ""}
         </div>
       </div>
-      ${p.is_host ? '<span class="crown">👑 HOST</span>' : ''}
+      ${p.is_host ? '<span class="crown">👑 HOST</span>' : ""}
     </div>
   `).join("");
 
   const seen = data.filter(p => p.role_seen).length;
   seenProgress.textContent = `${seen} / ${data.length} siap`;
+
+  const voted = data.filter(p => p.vote_submitted).length;
+  voteProgress.textContent = `${voted} / ${data.length} sudah vote`;
 
   if (currentIsHost) updateImpostorControls(data.length);
   return data;
@@ -145,53 +174,114 @@ async function loadPlayers() {
 
 async function loadRoom() {
   if (!currentRoomCode) return null;
+
   const { data } = await db
     .from("rooms")
-    .select("room_code,game_phase,impostor_count")
+    .select("room_code,game_phase,impostor_count,round_no")
     .eq("room_code", currentRoomCode)
     .maybeSingle();
+
   return data;
 }
 
-async function showPhase(phase) {
+async function showLobby() {
   hideScreens();
+  screens.lobby.classList.remove("hidden");
+  roomCodeDisplay.textContent = currentRoomCode;
+  currentIsHost ? hostBadge.classList.remove("hidden") : hostBadge.classList.add("hidden");
+  currentIsHost ? hostControls.classList.remove("hidden") : hostControls.classList.add("hidden");
+  await loadPlayers();
+}
 
-  if (phase === "lobby") {
-    lobbyScreen.classList.remove("hidden");
-    roomCodeDisplay.textContent = currentRoomCode;
-    currentIsHost ? hostBadge.classList.remove("hidden") : hostBadge.classList.add("hidden");
-    currentIsHost ? hostControls.classList.remove("hidden") : hostControls.classList.add("hidden");
-    await loadPlayers();
+async function showRevealOrWaiting() {
+  const players = await loadPlayers();
+  const me = players.find(p => String(p.id) === String(currentPlayerId));
+
+  if (me?.role_seen) {
+    hideScreens();
+    screens.waiting.classList.remove("hidden");
     return;
   }
 
-  if (phase === "reveal") {
-    await loadMyRole();
-    revealScreen.classList.remove("hidden");
-    return;
-  }
+  await loadMyRole();
+  hideScreens();
+  screens.reveal.classList.remove("hidden");
+}
 
-  if (phase === "waiting") {
-    waitingScreen.classList.remove("hidden");
-    await loadPlayers();
-    return;
-  }
+async function showDiscussion() {
+  hideScreens();
+  screens.discussion.classList.remove("hidden");
+  discussionRoomCode.textContent = currentRoomCode;
 
-  if (phase === "discussion") {
-    discussionScreen.classList.remove("hidden");
-    discussionRoomCode.textContent = currentRoomCode;
-    currentIsHost ? resetLobbyBtn.classList.remove("hidden") : resetLobbyBtn.classList.add("hidden");
+  if (currentIsHost) {
+    startVotingBtn.classList.remove("hidden");
+    discussionHint.classList.add("hidden");
+  } else {
+    startVotingBtn.classList.add("hidden");
+    discussionHint.classList.remove("hidden");
   }
 }
 
+async function showVotingOrWaiting() {
+  const players = await loadPlayers();
+  const me = players.find(p => String(p.id) === String(currentPlayerId));
+
+  if (me?.vote_submitted) {
+    hideScreens();
+    screens.voteWaiting.classList.remove("hidden");
+    return;
+  }
+
+  selectedVoteId = null;
+  submitVoteBtn.disabled = true;
+  voteMessage.textContent = "";
+
+  const choices = players.filter(p => String(p.id) !== String(currentPlayerId));
+  voteOptions.innerHTML = choices.map(p => `
+    <button class="vote-option" data-player-id="${p.id}">
+      <span class="vote-radio"></span>
+      <span class="vote-avatar">${escapeHtml((p.player_name || "?")[0].toUpperCase())}</span>
+      <span class="vote-player-name">${escapeHtml(p.player_name)}</span>
+    </button>
+  `).join("");
+
+  voteOptions.querySelectorAll(".vote-option").forEach(btn => {
+    btn.addEventListener("click", () => {
+      voteOptions.querySelectorAll(".vote-option").forEach(x => x.classList.remove("selected"));
+      btn.classList.add("selected");
+      selectedVoteId = Number(btn.dataset.playerId);
+      submitVoteBtn.disabled = false;
+    });
+  });
+
+  hideScreens();
+  screens.voting.classList.remove("hidden");
+}
+
+async function showResult() {
+  hideScreens();
+  screens.result.classList.remove("hidden");
+  await loadResult();
+}
+
+async function showPhase(phase) {
+  if (phase === "lobby") return showLobby();
+  if (phase === "reveal") return showRevealOrWaiting();
+  if (phase === "discussion") return showDiscussion();
+  if (phase === "voting") return showVotingOrWaiting();
+  if (phase === "result") return showResult();
+}
+
 async function loadMyRole() {
+  revealMessage.textContent = "";
+
   const { data, error } = await db.rpc("impostor_get_my_role", {
     p_player_id: currentPlayerId,
     p_player_token: currentPlayerToken
   });
 
-  if (error || !data || !data.length) {
-    revealMessage.textContent = "Role belum tersedia.";
+  if (error || !data?.length) {
+    revealMessage.textContent = error?.message || "Role belum tersedia.";
     return;
   }
 
@@ -211,9 +301,69 @@ async function loadMyRole() {
   }
 }
 
+async function loadResult() {
+  resultMessage.textContent = "";
+
+  const { data, error } = await db.rpc("impostor_get_result", {
+    p_player_id: currentPlayerId,
+    p_player_token: currentPlayerToken
+  });
+
+  if (error || !data) {
+    resultMessage.textContent = error?.message || "Hasil belum tersedia.";
+    return;
+  }
+
+  const winnerIsCivilian = data.winner === "civilian";
+  winnerTitle.textContent = winnerIsCivilian ? "Warga Menang!" : "Impostor Menang!";
+
+  eliminationCard.classList.remove("win-civilian", "win-impostor");
+  eliminationCard.classList.add(winnerIsCivilian ? "win-civilian" : "win-impostor");
+
+  if (data.tie) {
+    resultSmallLabel.textContent = "VOTING SERI";
+    eliminatedName.textContent = "Tidak Ada Eliminasi";
+    eliminatedDetail.textContent = "Suara tertinggi seri. Warga gagal mencapai keputusan, sehingga Impostor memenangkan ronde.";
+  } else {
+    resultSmallLabel.textContent = "PEMAIN TERPILIH";
+    eliminatedName.textContent = data.eliminated_player_name || "-";
+
+    if (data.eliminated_role === "impostor") {
+      eliminatedDetail.textContent = `Mendapat ${data.top_votes} suara dan ternyata adalah IMPOSTOR.`;
+    } else {
+      eliminatedDetail.textContent = `Mendapat ${data.top_votes} suara dan ternyata adalah WARGA.`;
+    }
+  }
+
+  resultSecretWord.textContent = data.secret_word || "-";
+  resultImpostors.textContent = (data.impostors || []).join(", ") || "-";
+
+  voteTotals.innerHTML = (data.vote_totals || []).map(row => `
+    <div class="vote-total-row">
+      <strong>${escapeHtml(row.player_name)}</strong>
+      <span>${row.votes} suara</span>
+    </div>
+  `).join("");
+
+  if (currentIsHost) {
+    playAgainBtn.classList.remove("hidden");
+    resultHostHint.classList.add("hidden");
+  } else {
+    playAgainBtn.classList.add("hidden");
+    resultHostHint.classList.remove("hidden");
+  }
+}
+
 async function unsubscribeRealtime() {
-  if (roomChannel) { await db.removeChannel(roomChannel); roomChannel = null; }
-  if (playerChannel) { await db.removeChannel(playerChannel); playerChannel = null; }
+  if (roomChannel) {
+    await db.removeChannel(roomChannel);
+    roomChannel = null;
+  }
+
+  if (playerChannel) {
+    await db.removeChannel(playerChannel);
+    playerChannel = null;
+  }
 }
 
 async function subscribeRealtime() {
@@ -222,21 +372,37 @@ async function subscribeRealtime() {
   roomChannel = db
     .channel(`imp-room-${currentRoomCode}-${Date.now()}`)
     .on("postgres_changes", {
-      event:"UPDATE", schema:"public", table:"rooms",
-      filter:`room_code=eq.${currentRoomCode}`
+      event: "UPDATE",
+      schema: "public",
+      table: "rooms",
+      filter: `room_code=eq.${currentRoomCode}`
     }, async payload => {
-      const phase = payload.new.game_phase;
-      await showPhase(phase);
+      await showPhase(payload.new.game_phase);
+    })
+    .on("postgres_changes", {
+      event: "DELETE",
+      schema: "public",
+      table: "rooms",
+      filter: `room_code=eq.${currentRoomCode}`
+    }, async () => {
+      await unsubscribeRealtime();
+      clearSession();
+      currentRoomCode = null;
+      hideScreens();
+      screens.setup.classList.remove("hidden");
+      setupMessage.textContent = "Room ditutup oleh host.";
     })
     .subscribe(status => {
-      if (status === "SUBSCRIBED") setConnection(true,"Supabase Realtime terhubung");
+      if (status === "SUBSCRIBED") setConnection(true, "Supabase Realtime terhubung");
     });
 
   playerChannel = db
     .channel(`imp-players-${currentRoomCode}-${Date.now()}`)
     .on("postgres_changes", {
-      event:"*", schema:"public", table:"players",
-      filter:`room_code=eq.${currentRoomCode}`
+      event: "*",
+      schema: "public",
+      table: "players",
+      filter: `room_code=eq.${currentRoomCode}`
     }, async () => {
       await loadPlayers();
     })
@@ -246,16 +412,33 @@ async function subscribeRealtime() {
 async function enterRoom() {
   saveSession();
   const room = await loadRoom();
-  await showPhase(room?.game_phase || "lobby");
+
+  if (!room) {
+    clearSession();
+    hideScreens();
+    screens.setup.classList.remove("hidden");
+    setupMessage.textContent = "Room sudah tidak tersedia.";
+    return;
+  }
+
+  await showPhase(room.game_phase || "lobby");
   await subscribeRealtime();
 }
 
 async function createRoom() {
   const name = normalizeName(playerNameInput.value);
-  if (!name) { setupMessage.textContent = "Isi nama pemain."; return; }
+  if (!name) {
+    setupMessage.textContent = "Isi nama pemain.";
+    return;
+  }
 
   createRoomBtn.disabled = true;
-  const { data, error } = await db.rpc("impostor_create_room", { p_player_name: name });
+  setupMessage.textContent = "";
+
+  const { data, error } = await db.rpc("impostor_create_room", {
+    p_player_name: name
+  });
+
   createRoomBtn.disabled = false;
 
   if (error || !data?.length) {
@@ -269,19 +452,27 @@ async function createRoom() {
   currentPlayerToken = row.player_token;
   currentPlayerName = name;
   currentIsHost = true;
+
   await enterRoom();
 }
 
 async function joinRoom() {
   const name = normalizeName(playerNameInput.value);
   const code = normalizeCode(roomCodeInput.value);
-  if (!name || code.length !== 6) { setupMessage.textContent = "Isi nama dan kode room 6 digit."; return; }
+
+  if (!name || code.length !== 6) {
+    setupMessage.textContent = "Isi nama dan kode room 6 digit.";
+    return;
+  }
 
   joinRoomBtn.disabled = true;
+  setupMessage.textContent = "";
+
   const { data, error } = await db.rpc("impostor_join_room", {
     p_room_code: code,
     p_player_name: name
   });
+
   joinRoomBtn.disabled = false;
 
   if (error || !data?.length) {
@@ -295,6 +486,7 @@ async function joinRoom() {
   currentPlayerToken = row.player_token;
   currentPlayerName = name;
   currentIsHost = false;
+
   await enterRoom();
 }
 
@@ -317,6 +509,8 @@ async function startGame() {
 
 async function markSeen() {
   seenBtn.disabled = true;
+  revealMessage.textContent = "";
+
   const { data, error } = await db.rpc("impostor_mark_seen", {
     p_player_id: currentPlayerId,
     p_player_token: currentPlayerToken
@@ -329,20 +523,71 @@ async function markSeen() {
   }
 
   if (data === "discussion") {
-    await showPhase("discussion");
+    await showDiscussion();
   } else {
-    await showPhase("waiting");
+    hideScreens();
+    screens.waiting.classList.remove("hidden");
+    await loadPlayers();
   }
 }
 
-async function resetLobby() {
-  resetLobbyBtn.disabled = true;
+async function startVoting() {
+  startVotingBtn.disabled = true;
+  discussionMessage.textContent = "";
+
+  const { error } = await db.rpc("impostor_start_voting", {
+    p_room_code: currentRoomCode,
+    p_player_id: currentPlayerId,
+    p_player_token: currentPlayerToken
+  });
+
+  if (error) {
+    discussionMessage.textContent = error.message;
+    startVotingBtn.disabled = false;
+  }
+}
+
+async function submitVote() {
+  if (!selectedVoteId) return;
+
+  submitVoteBtn.disabled = true;
+  voteMessage.textContent = "";
+
+  const { data, error } = await db.rpc("impostor_cast_vote", {
+    p_player_id: currentPlayerId,
+    p_player_token: currentPlayerToken,
+    p_voted_player_id: selectedVoteId
+  });
+
+  if (error) {
+    voteMessage.textContent = error.message;
+    submitVoteBtn.disabled = false;
+    return;
+  }
+
+  if (data === "result") {
+    await showResult();
+  } else {
+    hideScreens();
+    screens.voteWaiting.classList.remove("hidden");
+    await loadPlayers();
+  }
+}
+
+async function playAgain() {
+  playAgainBtn.disabled = true;
+  resultMessage.textContent = "";
+
   const { error } = await db.rpc("impostor_reset_lobby", {
     p_room_code: currentRoomCode,
     p_player_id: currentPlayerId,
     p_player_token: currentPlayerToken
   });
-  if (error) resetLobbyBtn.disabled = false;
+
+  if (error) {
+    resultMessage.textContent = error.message;
+    playAgainBtn.disabled = false;
+  }
 }
 
 async function leaveRoom() {
@@ -355,18 +600,21 @@ async function leaveRoom() {
 
   await unsubscribeRealtime();
   clearSession();
+
   currentRoomCode = null;
   currentPlayerId = null;
   currentPlayerToken = null;
   currentPlayerName = null;
   currentIsHost = false;
+
   hideScreens();
-  setupScreen.classList.remove("hidden");
+  screens.setup.classList.remove("hidden");
 }
 
 async function restoreSession() {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) return;
+
   try {
     const s = JSON.parse(raw);
     currentRoomCode = s.roomCode;
@@ -374,41 +622,61 @@ async function restoreSession() {
     currentPlayerToken = s.playerToken;
     currentPlayerName = s.playerName;
     currentIsHost = s.isHost;
-    if (currentRoomCode && currentPlayerId && currentPlayerToken) await enterRoom();
-  } catch { clearSession(); }
+
+    if (currentRoomCode && currentPlayerId && currentPlayerToken) {
+      await enterRoom();
+    }
+  } catch {
+    clearSession();
+  }
 }
 
 async function boot() {
-  const { error } = await db.from("rooms").select("room_code,game_phase").limit(1);
+  const { error } = await db
+    .from("rooms")
+    .select("room_code,game_phase")
+    .limit(1);
+
   if (error) {
-    setConnection(false,"Database V5 belum siap");
-    setupMessage.textContent = "Jalankan SQL V5 terlebih dahulu di Supabase SQL Editor.";
+    setConnection(false, "Database belum siap");
+    setupMessage.textContent = "Pastikan SQL V5 dan SQL V6 sudah dijalankan.";
     return;
   }
-  setConnection(true,"Supabase terhubung");
+
+  setConnection(true, "Supabase terhubung");
   await restoreSession();
 }
 
-minusImpostorBtn.addEventListener("click", () => {
+minusImpostorBtn.addEventListener("click", async () => {
   if (impostorCount > 1) impostorCount--;
-  loadPlayers();
+  const players = await loadPlayers();
+  updateImpostorControls(players.length);
 });
-plusImpostorBtn.addEventListener("click", () => {
+
+plusImpostorBtn.addEventListener("click", async () => {
   impostorCount++;
-  loadPlayers();
+  const players = await loadPlayers();
+  updateImpostorControls(players.length);
 });
-roomCodeInput.addEventListener("input", () => roomCodeInput.value = normalizeCode(roomCodeInput.value));
+
+roomCodeInput.addEventListener("input", () => {
+  roomCodeInput.value = normalizeCode(roomCodeInput.value);
+});
+
 createRoomBtn.addEventListener("click", createRoom);
 joinRoomBtn.addEventListener("click", joinRoom);
 startGameBtn.addEventListener("click", startGame);
 seenBtn.addEventListener("click", markSeen);
-resetLobbyBtn.addEventListener("click", resetLobby);
+startVotingBtn.addEventListener("click", startVoting);
+submitVoteBtn.addEventListener("click", submitVote);
+playAgainBtn.addEventListener("click", playAgain);
 leaveRoomBtn.addEventListener("click", leaveRoom);
+
 copyCodeBtn.addEventListener("click", async () => {
   try {
     await navigator.clipboard.writeText(currentRoomCode);
     copyCodeBtn.textContent = "Tersalin ✓";
-    setTimeout(() => copyCodeBtn.textContent = "Salin Kode",1200);
+    setTimeout(() => copyCodeBtn.textContent = "Salin Kode", 1200);
   } catch {}
 });
 

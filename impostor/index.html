@@ -81,7 +81,7 @@
         <p class="subtitle">Pastikan hanya kamu yang melihat layar ini.</p>
 
         <div id="roleCard" class="role-card">
-          <span id="roleLabel" class="role-label">PERANMU</span>
+          <span class="role-label">PERANMU</span>
           <h2 id="roleName">...</h2>
           <div class="secret-box">
             <span id="secretLabel">KATA RAHASIA</span>
@@ -106,14 +106,68 @@
 
       <section id="discussionScreen" class="hidden">
         <p class="eyebrow">FASE DISKUSI</p>
-        <h1>Mulai Berdiskusi</h1>
+        <h1>Cari Impostor</h1>
         <div class="discussion-box">
           <div class="pulse-ring">💬</div>
-          <h2>Semua pemain sudah siap</h2>
-          <p>Berikan petunjuk tanpa menyebut kata rahasia secara langsung. Cari siapa yang tidak tahu kata tersebut.</p>
+          <h2>Diskusikan petunjuk kalian</h2>
+          <p>Jangan menyebut kata rahasia secara langsung. Perhatikan pemain yang petunjuknya terasa janggal.</p>
           <div class="mini-room">Room <strong id="discussionRoomCode">------</strong></div>
         </div>
-        <button id="resetLobbyBtn" class="secondary-btn hidden">Kembali ke Lobby</button>
+
+        <button id="startVotingBtn" class="start-btn hidden">Mulai Voting</button>
+        <p id="discussionHint" class="host-hint">Tunggu host memulai voting.</p>
+        <p id="discussionMessage" class="form-message"></p>
+      </section>
+
+      <section id="votingScreen" class="hidden">
+        <p class="eyebrow">VOTING</p>
+        <h1>Siapa Impostor?</h1>
+        <p class="subtitle">Pilih satu pemain. Kamu tidak dapat memilih dirimu sendiri dan vote tidak bisa diubah.</p>
+
+        <div id="voteOptions" class="vote-options"></div>
+        <button id="submitVoteBtn" class="primary-btn" disabled>Kirim Vote</button>
+        <p id="voteMessage" class="form-message"></p>
+      </section>
+
+      <section id="voteWaitingScreen" class="hidden">
+        <p class="eyebrow">VOTE TERKIRIM</p>
+        <h1>Menunggu Hasil</h1>
+        <div class="waiting-box">
+          <div class="pulse-ring">🗳️</div>
+          <h2 id="voteProgress">0 / 0 sudah vote</h2>
+          <p>Vote kamu sudah tersimpan. Tunggu pemain lain selesai memilih.</p>
+        </div>
+      </section>
+
+      <section id="resultScreen" class="hidden">
+        <p class="eyebrow">HASIL RONDE</p>
+        <h1 id="winnerTitle">Hasil Voting</h1>
+
+        <div id="eliminationCard" class="result-hero">
+          <span id="resultSmallLabel">PEMAIN TERPILIH</span>
+          <strong id="eliminatedName">...</strong>
+          <p id="eliminatedDetail"></p>
+        </div>
+
+        <div class="result-grid">
+          <div class="result-info">
+            <span>KATA RAHASIA</span>
+            <strong id="resultSecretWord">...</strong>
+          </div>
+          <div class="result-info">
+            <span>IMPOSTOR</span>
+            <strong id="resultImpostors">...</strong>
+          </div>
+        </div>
+
+        <div class="vote-summary">
+          <span class="label-small">HASIL SUARA</span>
+          <div id="voteTotals"></div>
+        </div>
+
+        <button id="playAgainBtn" class="primary-btn hidden">Main Lagi</button>
+        <p id="resultHostHint" class="host-hint">Tunggu host memulai ronde berikutnya.</p>
+        <p id="resultMessage" class="form-message"></p>
       </section>
     </section>
   </main>
