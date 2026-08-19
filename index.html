@@ -1,47 +1,95 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tap Target</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#07111f">
+  <title>Game Alpi</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main class="app">
-    <section class="card">
-      <p class="eyebrow">GAME LATIHAN HOSTING</p>
-      <h1>Game Pertamaku</h1>
-      <p class="subtitle">Klik lingkaran sebanyak mungkin dalam 20 detik.</p>
-
-      <div class="stats">
-        <div class="stat">
-          <span>Skor</span>
-          <strong id="score">0</strong>
-        </div>
-        <div class="stat">
-          <span>Waktu</span>
-          <strong><span id="time">20</span>s</strong>
-        </div>
-        <div class="stat">
-          <span>Terbaik</span>
-          <strong id="bestScore">0</strong>
-        </div>
+  <main class="page">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">ALPI GAME HUB</p>
+        <h1>Game Alpi</h1>
+        <p class="subtitle">
+          Kumpulan game sederhana untuk dimainkan langsung dari browser.
+        </p>
       </div>
-
-      <div id="gameArea" class="game-area" aria-label="Area permainan">
-        <div id="startMessage" class="start-message">
-          <div class="emoji">🎯</div>
-          <h2>Siap bermain?</h2>
-          <p>Tekan tombol mulai, lalu tap target yang muncul.</p>
-        </div>
-        <button id="target" class="target" aria-label="Target"></button>
+      <div class="status">
+        <span class="dot"></span>
+        Online
       </div>
-
-      <button id="startBtn" class="start-btn">Mulai Game</button>
-      <p id="result" class="result"></p>
     </section>
-  </main>
 
-  <script src="script.js"></script>
+    <section class="section-head">
+      <div>
+        <p class="eyebrow">PILIH GAME</p>
+        <h2>Mau main apa?</h2>
+      </div>
+      <p class="game-count">1 game tersedia</p>
+    </section>
+
+    <section class="games">
+      <article class="game-card featured">
+        <div class="game-icon">🎯</div>
+        <div class="game-content">
+          <div class="card-top">
+            <span class="badge ready">TERSEDIA</span>
+            <span class="players">1 Pemain</span>
+          </div>
+          <h3>Tap Target</h3>
+          <p>
+            Klik target sebanyak mungkin sebelum waktu habis. Cocok untuk tes kecepatan tangan.
+          </p>
+          <a class="play-btn" href="tap-target/">
+            Mainkan Sekarang
+            <span>→</span>
+          </a>
+        </div>
+      </article>
+
+      <article class="game-card">
+        <div class="game-icon">🕵️</div>
+        <div class="game-content">
+          <div class="card-top">
+            <span class="badge soon">COMING SOON</span>
+            <span class="players">3–10 Pemain</span>
+          </div>
+          <h3>Impostor</h3>
+          <p>
+            Cari siapa impostor di antara pemain. Nantinya game ini memakai room multiplayer.
+          </p>
+          <button class="play-btn disabled" disabled>
+            Segera Hadir
+            <span>⌛</span>
+          </button>
+        </div>
+      </article>
+
+      <article class="game-card">
+        <div class="game-icon">🎮</div>
+        <div class="game-content">
+          <div class="card-top">
+            <span class="badge soon">SLOT GAME</span>
+            <span class="players">Nanti</span>
+          </div>
+          <h3>Game Berikutnya</h3>
+          <p>
+            Tempat untuk game baru. Tinggal buat folder baru dan tambahkan kartu di halaman ini.
+          </p>
+          <button class="play-btn disabled" disabled>
+            Belum Tersedia
+            <span>＋</span>
+          </button>
+        </div>
+      </article>
+    </section>
+
+    <footer>
+      <p>Game Alpi • Hosted with Vercel</p>
+    </footer>
+  </main>
 </body>
 </html>
