@@ -46,3 +46,8 @@ footer{padding:23px 0 0;text-align:center;color:#536a89;font-size:8px}
 .upcoming-grid .tile-icon{width:42px;height:42px;margin-bottom:7px;font-size:22px}
 .upcoming-grid .game-tile strong{font-size:9px}
 .upcoming-grid .game-tile>span{font-size:7px}
+
+/* BOT TEST V1 — secret developer trigger */
+.brand-mark[data-dev-trigger],.brand-copy strong[data-dev-trigger]{cursor:default}
+body.developer-mode .header-badge{color:#cfe9ff;border-color:rgba(94,184,255,.28);background:rgba(35,96,159,.22)}
+body.developer-mode .header-badge:after{content:" • DEV"}

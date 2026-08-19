@@ -8,6 +8,7 @@ const STORAGE_KEY='gameAlpiImpostorV11';
 let currentRoomCode=null,currentPlayerId=null,currentPlayerToken=null,currentPlayerName=null,currentIsHost=false,currentRoom=null,currentPhase='setup';
 let impostorCount=1,impostorKnows=true,clueCount=2,showCategoryToImpostor=true,difficulty='normal',discussionSeconds=180,tieRule='revote',scoreEnabled=true,matchTarget=1;
 let selectedVoteId=null,roomChannel=null,playerChannel=null,timerHandle=null,qrInstance=null;
+let impBotTokens=new Map(),impBotTimer=null,impBotBusy=false;
 
 function esc(v){return String(v).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;')}
 function normName(v){return v.trim().replace(/\s+/g,' ').slice(0,20)}function normCode(v){return v.replace(/\D/g,'').slice(0,6)}
@@ -26,11 +27,65 @@ async function loadScore(target){if(!currentPlayerId)return;const {data,error}=a
 
 async function loadRoom(){if(!currentRoomCode)return null;const {data}=await db.from('rooms').select('room_code,game_phase,round_no,selected_categories,impostor_knows,impostor_clue_count,show_category_to_impostor,difficulty,discussion_duration_seconds,discussion_started_at,tie_rule,score_enabled,match_target_games,completed_games,match_status,vote_cycle,discussion_first_player_id').eq('room_code',currentRoomCode).maybeSingle();currentRoom=data;return data}
 async function handleRemoved(){await unsubscribe();clearSession();currentRoomCode=currentPlayerId=currentPlayerToken=currentPlayerName=null;currentIsHost=false;showScreen('setup');$('setupMessage').textContent='Kamu sudah tidak berada di room ini.'}
-async function loadPlayers(){if(!currentRoomCode)return[];const {data,error}=await db.from('players').select('id,player_name,is_host,role_seen,vote_submitted,score,is_alive,created_at').eq('room_code',currentRoomCode).order('created_at',{ascending:true});if(error)return[];const me=data.find(p=>String(p.id)===String(currentPlayerId));if(currentPlayerId&&!me){await handleRemoved();return[]}
+async function loadPlayers(){if(!currentRoomCode)return[];const {data,error}=await db.from('players').select('id,player_name,is_host,role_seen,vote_submitted,score,is_alive,created_at,is_bot').eq('room_code',currentRoomCode).order('created_at',{ascending:true});if(error)return[];const me=data.find(p=>String(p.id)===String(currentPlayerId));if(currentPlayerId&&!me){await handleRemoved();return[]}
  const alive=data.filter(p=>p.is_alive!==false);$('playerCount').textContent=`${data.length} pemain`;$('seenProgress').textContent=`${alive.filter(p=>p.role_seen).length} / ${alive.length} siap`;$('voteProgress').textContent=`${alive.filter(p=>p.vote_submitted).length} / ${alive.length} sudah vote`;
- $('playersList').innerHTML=data.map(p=>`<div class="player-row"><div class="player-left"><div class="avatar">${esc((p.player_name||'?')[0].toUpperCase())}</div><div class="player-text"><div class="player-name">${esc(p.player_name)}${p.is_alive===false?' ☠️':''}</div><div class="you">${String(p.id)===String(currentPlayerId)?'Kamu • ':''}${scoreEnabled?(p.score||0)+' poin':''}</div></div></div><div class="player-actions">${p.is_host?'<span class="crown">👑 HOST</span>':''}${currentIsHost&&currentPhase==='lobby'&&!p.is_host?`<button class="kick-btn" data-kick="${p.id}">Kick</button>`:''}</div></div>`).join('');
- document.querySelectorAll('[data-kick]').forEach(b=>b.onclick=()=>kickPlayer(Number(b.dataset.kick)));if(currentIsHost)updateImp(alive.length);return data}
+ $('playersList').innerHTML=data.map(p=>`<div class="player-row"><div class="player-left"><div class="avatar">${esc((p.player_name||'?')[0].toUpperCase())}</div><div class="player-text"><div class="player-name">${esc(p.player_name)}${p.is_bot?'<span class="bot-badge">BOT</span>':''}${p.is_alive===false?' ☠️':''}</div><div class="you">${String(p.id)===String(currentPlayerId)?'Kamu • ':''}${scoreEnabled?(p.score||0)+' poin':''}</div></div></div><div class="player-actions">${p.is_host?'<span class="crown">👑 HOST</span>':''}${currentIsHost&&currentPhase==='lobby'&&!p.is_host?`<button class="kick-btn" data-kick="${p.id}">Kick</button>`:''}</div></div>`).join('');
+ document.querySelectorAll('[data-kick]').forEach(b=>b.onclick=()=>kickPlayer(Number(b.dataset.kick)));window.__impPlayers=data;if(currentIsHost){updateImp(alive.length);await refreshImpBotTokens()}maybeScheduleImpBots();return data}
 async function kickPlayer(id){if(!confirm('Keluarkan pemain ini dari room?'))return;const {error}=await db.rpc('impostor_kick_player',{p_room_code:currentRoomCode,p_host_id:currentPlayerId,p_host_token:currentPlayerToken,p_target_player_id:id});if(error)$('lobbyMessage').textContent=error.message}
+
+
+function impBotDelay(){return Number($("impBotSpeed")?.value||localStorage.getItem("gameAlpiImpBotSpeed")||550)}
+async function refreshImpBotTokens(){
+ if(!currentIsHost||!currentRoomCode)return;
+ const {data,error}=await db.rpc("impostor_get_bot_sessions",{p_room_code:currentRoomCode,p_host_id:currentPlayerId,p_host_token:currentPlayerToken});
+ if(error)return;
+ impBotTokens=new Map((data||[]).map(x=>[Number(x.player_id),x.player_token]))
+}
+async function addImpBots(count){
+ const {error}=await db.rpc("impostor_add_bots",{p_room_code:currentRoomCode,p_host_id:currentPlayerId,p_host_token:currentPlayerToken,p_count:count});
+ if(error){$("lobbyMessage").textContent=error.message;return}
+ await loadPlayers();await refreshImpBotTokens()
+}
+async function removeImpBots(){
+ const {error}=await db.rpc("impostor_remove_bots",{p_room_code:currentRoomCode,p_host_id:currentPlayerId,p_host_token:currentPlayerToken});
+ if(error){$("lobbyMessage").textContent=error.message;return}
+ await loadPlayers();await refreshImpBotTokens()
+}
+function maybeScheduleImpBots(){
+ if(!currentIsHost||impBotBusy||impBotTimer||!currentRoomCode)return;
+ if(!["reveal","voting"].includes(currentPhase))return;
+ const bots=(window.__impPlayers||[]).filter(p=>p.is_bot&&p.is_alive!==false);
+ if(!bots.length)return;
+ impBotTimer=setTimeout(async()=>{impBotTimer=null;await runImpBots()},impBotDelay())
+}
+async function runImpBots(){
+ if(impBotBusy)return;impBotBusy=true;
+ try{
+   const bots=(window.__impPlayers||[]).filter(p=>p.is_bot&&p.is_alive!==false);
+   if(!bots.length)return;
+   if(!impBotTokens.size)await refreshImpBotTokens();
+
+   if(currentPhase==="reveal"){
+     for(const bot of bots){
+       if(bot.role_seen)continue;
+       const bt=impBotTokens.get(Number(bot.id));if(!bt)continue;
+       await db.rpc("impostor_mark_seen",{p_player_id:bot.id,p_player_token:bt})
+     }
+   }else if(currentPhase==="voting"){
+     for(const bot of bots){
+       if(bot.vote_submitted)continue;
+       const bt=impBotTokens.get(Number(bot.id));if(!bt)continue;
+       const targets=(window.__impPlayers||[]).filter(p=>p.is_alive!==false&&Number(p.id)!==Number(bot.id));
+       if(!targets.length)continue;
+       const target=targets[Math.floor(Math.random()*targets.length)];
+       await db.rpc("impostor_cast_vote",{p_player_id:bot.id,p_player_token:bt,p_voted_player_id:target.id})
+     }
+   }
+ }finally{
+   impBotBusy=false;
+   setTimeout(()=>maybeScheduleImpBots(),100)
+ }
+}
 
 function joinUrl(){const u=new URL(location.href);u.search='';u.searchParams.set('room',currentRoomCode);return u.toString()}
 function renderQr(){const box=$('qrcode');box.innerHTML='';if(window.QRCode){qrInstance=new QRCode(box,{text:joinUrl(),width:180,height:180,correctLevel:QRCode.CorrectLevel.M})}}
@@ -64,7 +119,7 @@ async function loadHistory(target=$('historyList')){const {data}=await db.rpc('i
 async function showResult(){clearTimer();showScreen('result');const {data,error}=await db.rpc('impostor_get_result',{p_player_id:currentPlayerId,p_player_token:currentPlayerToken});if(error||!data){$('resultMessage').textContent=error?.message||'Hasil belum tersedia.';return}const gameOver=!!data.game_over,tournamentOver=!!data.tournament_over;$('winnerTitle').textContent=gameOver?(data.winner==='civilian'?'Warga Menang!':'Impostor Menang!'):'Ronde Selesai';$('eliminationCard').classList.remove('win-civilian','win-impostor');if(gameOver)$('eliminationCard').classList.add(data.winner==='civilian'?'win-civilian':'win-impostor');$('resultSmallLabel').textContent=data.tie?'VOTING SERI':'PEMAIN TERPILIH';$('eliminatedName').textContent=data.tie?'Tidak Ada Eliminasi':(data.eliminated_player_name||'-');$('eliminatedDetail').textContent=data.message||'';$('resultSecretWord').textContent=data.secret_word||'Tetap rahasia';$('resultCategory').textContent=data.category||'-';$('resultImpostors').textContent=gameOver?((data.remaining_impostors||[]).join(', ')||'Tidak ada'):`${data.remaining_impostor_count??'?'} pemain`;$('resultRound').textContent=data.round_no||'-';$('voteTotals').innerHTML=(data.vote_totals||[]).map(r=>`<div class="vote-total-row"><strong>${esc(r.player_name)}</strong><span>${r.votes} suara</span></div>`).join('');$('resultScoreSection').classList.toggle('hidden',data.score_enabled===false);if(data.score_enabled!==false)await loadScore($('resultScoreboard'));await loadHistory();
  ['continueGameBtn','playAgainBtn','finishMatchBtn'].forEach(id=>$(id).classList.add('hidden'));if(currentIsHost){$('resultHostHint').classList.add('hidden');if(!gameOver){$('continueGameBtn').classList.remove('hidden')}else if(tournamentOver){$('finishMatchBtn').textContent='Lihat Hasil Akhir';$('finishMatchBtn').classList.remove('hidden')}else{$('playAgainBtn').textContent='Game Berikutnya';$('playAgainBtn').classList.remove('hidden');$('finishMatchBtn').textContent='Selesai Pertandingan Sekarang';$('finishMatchBtn').classList.remove('hidden')}}else $('resultHostHint').classList.remove('hidden')}
 async function showFinal(){clearTimer();showScreen('final');const room=await loadRoom();const {data}=await db.rpc('impostor_get_scoreboard',{p_player_id:currentPlayerId,p_player_token:currentPlayerToken});if(room?.score_enabled===false){$('finalTitle').textContent='Pertandingan Selesai';$('finalPodium').innerHTML=(data||[]).map((r,i)=>`<div class="podium-row"><span class="podium-name">${i+1}. ${esc(r.player_name)}</span><span class="podium-score">Skor nonaktif</span></div>`).join('')}else{$('finalTitle').textContent='🏆 Pemenang Pertandingan';$('finalPodium').innerHTML=(data||[]).map((r,i)=>`<div class="podium-row"><span class="podium-name">${i===0?'🏆 ':''}${i+1}. ${esc(r.player_name)}</span><span class="podium-score">${r.score} poin</span></div>`).join('')}await loadHistory($('finalHistory'))}
-async function showPhase(phase){currentPhase=phase;if(phase==='lobby')return showLobby();if(phase==='reveal')return showRevealOrWaiting();if(phase==='discussion')return showDiscussion();if(phase==='voting')return showVotingOrWaiting();if(phase==='result')return showResult();if(phase==='finished')return showFinal()}
+async function showPhase(phase){currentPhase=phase;let result;if(phase==='lobby')result=await showLobby();else if(phase==='reveal')result=await showRevealOrWaiting();else if(phase==='discussion')result=await showDiscussion();else if(phase==='voting')result=await showVotingOrWaiting();else if(phase==='result')result=await showResult();else if(phase==='finished')result=await showFinal();maybeScheduleImpBots();return result}
 
 async function unsubscribe(){if(roomChannel){await db.removeChannel(roomChannel);roomChannel=null}if(playerChannel){await db.removeChannel(playerChannel);playerChannel=null}}
 async function subscribe(){await unsubscribe();roomChannel=db.channel(`room-${currentRoomCode}-${Date.now()}`).on('postgres_changes',{event:'UPDATE',schema:'public',table:'rooms',filter:`room_code=eq.${currentRoomCode}`},async p=>{currentRoom=p.new;await showPhase(p.new.game_phase)}).on('postgres_changes',{event:'DELETE',schema:'public',table:'rooms',filter:`room_code=eq.${currentRoomCode}`},async()=>handleRemoved()).subscribe(s=>{if(s==='SUBSCRIBED')setConnection(true,'Supabase Realtime terhubung')});playerChannel=db.channel(`players-${currentRoomCode}-${Date.now()}`).on('postgres_changes',{event:'*',schema:'public',table:'players',filter:`room_code=eq.${currentRoomCode}`},async()=>{await loadPlayers();if(currentPhase==='lobby'&&currentRoom?.score_enabled!==false)await loadScore($('lobbyScoreboard'))}).subscribe()}
@@ -84,6 +139,8 @@ async function restore(){const raw=localStorage.getItem(STORAGE_KEY);if(!raw)ret
 $('createRoomBtn').onclick=createRoom;$('joinRoomBtn').onclick=joinRoom;$('roomCodeInput').oninput=()=>$('roomCodeInput').value=normCode($('roomCodeInput').value);$('minusImpostorBtn').onclick=async()=>{if(impostorCount>1)impostorCount--;updateImp((await loadPlayers()).filter(p=>p.is_alive!==false).length)};$('plusImpostorBtn').onclick=async()=>{impostorCount++;updateImp((await loadPlayers()).filter(p=>p.is_alive!==false).length)};
 $('selectAllCategoriesBtn').onclick=()=>setCategories(ALL_CATEGORIES);$('clearAllCategoriesBtn').onclick=()=>setCategories([]);document.querySelectorAll('#categoryGrid input').forEach(x=>x.onchange=updateCategorySummary);
 $('knowsYesBtn').onclick=()=>{impostorKnows=true;syncSettings()};$('knowsNoBtn').onclick=()=>{impostorKnows=false;clueCount=1;syncSettings()};$('minusClueBtn').onclick=()=>{clueCount=Math.max(1,clueCount-1);syncSettings()};$('plusClueBtn').onclick=()=>{clueCount=Math.min(3,clueCount+1);syncSettings()};$('showCatYesBtn').onclick=()=>{showCategoryToImpostor=true;syncSettings()};$('showCatNoBtn').onclick=()=>{showCategoryToImpostor=false;syncSettings()};$('scoreYesBtn').onclick=()=>{scoreEnabled=true;syncSettings()};$('scoreNoBtn').onclick=()=>{scoreEnabled=false;syncSettings()};$('difficultySelect').onchange=e=>difficulty=e.target.value;$('discussionTimerSelect').onchange=e=>discussionSeconds=Number(e.target.value);$('tieRuleSelect').onchange=e=>tieRule=e.target.value;$('matchTargetSelect').onchange=e=>matchTarget=Number(e.target.value);
+$('impAddBotBtn').onclick=()=>addImpBots(1);$('impAdd5BotBtn').onclick=()=>addImpBots(5);$('impRemoveBotsBtn').onclick=removeImpBots;
+$('impBotSpeed').onchange=e=>localStorage.setItem("gameAlpiImpBotSpeed",e.target.value);if(localStorage.getItem("gameAlpiImpBotSpeed"))$('impBotSpeed').value=localStorage.getItem("gameAlpiImpBotSpeed");
 $('startGameBtn').onclick=startGame;$('seenBtn').onclick=markSeen;$('startVotingBtn').onclick=startVoting;$('submitVoteBtn').onclick=submitVote;$('continueGameBtn').onclick=continueGame;$('playAgainBtn').onclick=nextGame;$('finishMatchBtn').onclick=finishMatch;$('finishLobbyBtn').onclick=finishMatch;$('leaveRoomBtn').onclick=leaveRoom;$('refreshScoreBtn').onclick=()=>loadScore($('lobbyScoreboard'));
 $('copyCodeBtn').onclick=async()=>{try{await navigator.clipboard.writeText(currentRoomCode);$('copyCodeBtn').textContent='Tersalin ✓';setTimeout(()=>$('copyCodeBtn').textContent='Salin',1200)}catch{}};$('showQrBtn').onclick=toggleQr;$('copyJoinLinkBtn').onclick=async()=>{try{await navigator.clipboard.writeText(joinUrl());$('copyJoinLinkBtn').textContent='Link tersalin ✓';setTimeout(()=>$('copyJoinLinkBtn').textContent='Salin Link Join',1200)}catch{}};
 

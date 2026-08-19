@@ -75,6 +75,27 @@
       </div>
 
       <div id="hostControls" class="host-controls hidden">
+        <div id="unoBotTools" class="dev-only dev-tools">
+          <div class="dev-tools-head">
+            <div><span>🧪 TEST TOOLS</span><strong>Bot UNO</strong></div>
+            <b>DEVELOPER</b>
+          </div>
+          <p>Bot hanya untuk menguji alur game. Host di device ini yang menjalankan aksi bot.</p>
+          <div class="bot-tool-actions">
+            <button id="unoAddBotBtn">+ 1 BOT</button>
+            <button id="unoAdd5BotBtn">+ 5 BOT</button>
+            <button id="unoRemoveBotsBtn">Hapus Bot</button>
+          </div>
+          <label>Kecepatan Bot
+            <select id="unoBotSpeed">
+              <option value="1200">Normal</option>
+              <option value="550" selected>Cepat</option>
+              <option value="120">Instan</option>
+            </select>
+          </label>
+          <small>V1: bot memainkan kartu legal, Multi Action, stacking, Wild, UNO, Challenge +4, dan 7–0 dasar. Bot belum melakukan Jump-In di luar gilirannya.</small>
+        </div>
+
         <div class="simple-setting">
           <div><span>Stacking +2 / +4</span><small>+2 hanya dengan +2, +4 hanya dengan +4</small></div>
           <div class="segmented"><button id="stackOffBtn" class="seg active">OFF</button><button id="stackOnBtn" class="seg">ON</button></div>
@@ -370,6 +391,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script src="../developer.js"></script>
 <script src="script.js"></script>
 </body>
 </html>

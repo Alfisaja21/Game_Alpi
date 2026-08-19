@@ -5,3 +5,7 @@ html,body{margin:0;min-height:100%;font-family:Inter,ui-sans-serif,system-ui,-ap
 .single-setup>p:not(.eyebrow){color:#879fbb;text-align:center;font-size:8px;line-height:1.45}
 .single-setup label{display:block;margin:10px 0 5px;color:#8299b5;font-size:8px;font-weight:900}
 .single-setup select{width:100%;padding:11px;border:1px solid #2b4967;border-radius:11px;color:#e1effd;background:#122944;outline:none}
+
+/* CATUR BOT V1 */
+.mode-grid .bot-mode{grid-column:1/-1;min-height:112px;background:linear-gradient(145deg,#15385a,#12263e);border-color:#315b81}.mode-grid .bot-mode span{font-size:28px}.mode-grid .bot-mode b{margin-top:7px}.bot-setup>p:not(.eyebrow){color:#879fbb;text-align:center;font-size:8px;line-height:1.45}.bot-setup label{display:block;margin:9px 0 5px;color:#839ab6;font-size:8px;font-weight:900}.bot-setup select{width:100%;padding:11px;border:1px solid #2b4967;border-radius:11px;color:#e0effd;background:#122944;outline:none}
+.bot-thinking{color:#9bd2ff!important}.bot-difficulty{display:inline-block;margin-left:4px;padding:2px 5px;border-radius:999px;color:#bfe5ff;background:#173d61;font-size:6px;font-weight:900}

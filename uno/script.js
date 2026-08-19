@@ -11,6 +11,7 @@ let stacking=false,jumpIn=false,sevenZero=false,drawUntil=false,challenge4=false
 let pendingCard=null,actionBusy=false,routeBusy=false,routeQueued=false,toastTimer=null,timeoutBusy=false;
 let onlinePlayers=new Set(),offlineSince=new Map();
 let multiCandidates=[],multiSelected=new Set(),multiAnchor=null,multiFinalColor=null,multiFinalCardId=null,multiSwapTarget=null;
+let unoBotTokens=new Map(),unoBotTimer=null,unoBotBusy=false;
 
 function esc(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
 function normName(v){return v.trim().replace(/\s+/g," ").slice(0,20)}
@@ -88,7 +89,7 @@ function renderPlayersLobby(){
   <div class="player-row">
    <div class="player-main">
     <div class="avatar">${esc(p.player_name[0].toUpperCase())}</div>
-    <div><div class="player-name">${esc(p.player_name)}</div><div class="player-sub">${p.is_host?"HOST":"Pemain "+p.seat_order}</div></div>
+    <div><div class="player-name">${esc(p.player_name)}${p.is_bot?'<span class="bot-badge">BOT</span>':""}</div><div class="player-sub">${p.is_host?"HOST":p.is_bot?"BOT • Test":"Pemain "+p.seat_order}</div></div>
    </div>
    ${isHost&&!p.is_host?`<button class="kick" data-kick="${p.id}">Kick</button>`:""}
   </div>`).join("");
@@ -109,11 +110,11 @@ function avatarGradient(i){
 function renderOpponents(){
  const others=players.filter(p=>p.id!==playerId);
  $("playersGameList").innerHTML=others.map((p,i)=>{
-  const online=onlinePlayers.has(Number(p.id));
-  return `<div class="opponent ${room?.current_player_id===p.id?"turn":""} ${online?"":"offline"}">
+  const online=!!p.is_bot||onlinePlayers.has(Number(p.id));
+  return `<div class="opponent ${p.is_bot?"bot":""} ${room?.current_player_id===p.id?"turn":""} ${online?"":"offline"}">
    <div class="opp-avatar" style="background:${avatarGradient(i)}">${esc(p.player_name[0].toUpperCase())}<span class="opp-count">${p.card_count}</span></div>
-   <b>${esc(p.player_name)}${p.is_host?" ★":""}</b>
-   <span class="opp-online">${online?"Online":"Terputus"}</span>
+   <b>${esc(p.player_name)}${p.is_bot?" 🤖":""}${p.is_host?" ★":""}</b>
+   <span class="opp-online">${p.is_bot?"BOT":online?"Online":"Terputus"}</span>
   </div>`
  }).join("")
 }
@@ -144,7 +145,7 @@ function renderTurn(){
  document.querySelector(".turn-banner")?.classList.toggle("waiting",!myTurn);
  $("turnSmall").textContent=myTurn?"SEKARANG":"GILIRAN";
  $("turnTitle").textContent=myTurn?"Giliranmu":(current?.player_name||"Menunggu...");
- const currentOnline=current?onlinePlayers.has(Number(current.id)):true;
+ const currentOnline=current?(!!current.is_bot||onlinePlayers.has(Number(current.id))):true;
  $("turnConnectionHint").classList.toggle("hidden",currentOnline||!current);
  if(room?.challenge_pending&&room?.challenge_player_id===playerId){
   $("turnInstruction").textContent="Pilih Terima +4 atau Challenge.";
@@ -165,7 +166,8 @@ function renderTurn(){
  $("drawBtn").disabled=!myTurn||room?.challenge_pending||actionBusy;
  const vuln=room?.uno_vulnerable_player_id;
  $("catchBtn").classList.toggle("hidden",!room?.uno_penalty||!vuln||vuln===playerId);
- renderOpponents()
+ renderOpponents();
+ maybeScheduleUnoBot()
 }
 
 async function timeoutTurn(offline=false,currentId=null){
@@ -180,6 +182,107 @@ async function timeoutTurn(offline=false,currentId=null){
   }
  }finally{setTimeout(()=>timeoutBusy=false,900)}
 }
+
+function unoBotDelay(){const el=$("unoBotSpeed");return Number(el?.value||localStorage.getItem("gameAlpiUnoBotSpeed")||550)}
+async function refreshUnoBotTokens(){
+ if(!isHost||!roomCode)return;
+ const {data,error}=await db.rpc("color_clash_get_bot_sessions",{p_room_code:roomCode,p_host_id:playerId,p_host_token:token});
+ if(error)return;
+ unoBotTokens=new Map((data||[]).map(x=>[Number(x.player_id),x.player_token]))
+}
+function chooseUnoBotColor(cards){
+ const count={red:0,yellow:0,green:0,blue:0};
+ cards.forEach(c=>{if(c.color&&count[c.color]!=null)count[c.color]++});
+ return Object.entries(count).sort((a,b)=>b[1]-a[1])[0]?.[0]||["red","yellow","green","blue"][Math.floor(Math.random()*4)]
+}
+function botGroupKey(c){return c.kind==="number"?`number:${c.value}`:`kind:${c.kind}`}
+function chooseUnoBotGroup(cards){
+ const playable=cards.filter(c=>c.playable);
+ if(!playable.length)return null;
+ const weights={wild4:90,draw2:80,skip:70,reverse:60,wild:50,number:20};
+ const candidates=playable.map(anchor=>{
+   const group=cards.filter(c=>botGroupKey(c)===botGroupKey(anchor));
+   return {anchor,group,score:(weights[anchor.kind]||10)+(group.length-1)*18+Math.random()*6}
+ }).sort((a,b)=>b.score-a.score);
+ return candidates[0]
+}
+async function maybeUnoBotCallUno(botId,botToken){
+ await new Promise(r=>setTimeout(r,100));
+ const p=players.find(x=>Number(x.id)===Number(botId));
+ if(room?.uno_penalty&&p?.card_count===1){
+   await db.rpc("color_clash_call_uno",{p_player_id:botId,p_player_token:botToken})
+ }
+}
+function maybeScheduleUnoBot(){
+ if(!isHost||unoBotBusy||unoBotTimer||!room||room.phase!=="playing")return;
+ const current=players.find(p=>Number(p.id)===Number(room.current_player_id));
+ if(!current?.is_bot)return;
+ unoBotTimer=setTimeout(async()=>{unoBotTimer=null;await runUnoBot(Number(current.id))},unoBotDelay())
+}
+async function runUnoBot(botId){
+ if(unoBotBusy)return;unoBotBusy=true;
+ try{
+   await loadRoom();await loadPlayers();
+   const current=players.find(p=>Number(p.id)===Number(room?.current_player_id));
+   if(!current?.is_bot||Number(current.id)!==Number(botId)||room?.phase!=="playing")return;
+   if(!unoBotTokens.has(botId))await refreshUnoBotTokens();
+   const botToken=unoBotTokens.get(botId);if(!botToken)return;
+
+   if(room.challenge_pending&&Number(room.challenge_player_id)===botId){
+     if(Math.random()<0.22)await db.rpc("color_clash_challenge_wild4",{p_player_id:botId,p_player_token:botToken});
+     else await db.rpc("color_clash_accept_wild4",{p_player_id:botId,p_player_token:botToken});
+     return
+   }
+
+   const {data:cards,error}=await db.rpc("color_clash_get_my_hand",{p_player_id:botId,p_player_token:botToken});
+   if(error)return;
+   const choice=chooseUnoBotGroup(cards||[]);
+   if(!choice){
+     await db.rpc("color_clash_draw",{p_player_id:botId,p_player_token:botToken});
+     setTimeout(()=>maybeScheduleUnoBot(),120);
+     return
+   }
+
+   const ids=choice.group.map(c=>c.card_id);
+   let final=choice.group[choice.group.length-1];
+   let chosenColor=null,swapTarget=null;
+   if(choice.anchor.kind==="wild"||choice.anchor.kind==="wild4"){
+     const remain=(cards||[]).filter(c=>!ids.includes(c.card_id));
+     chosenColor=chooseUnoBotColor(remain);
+   }else if(choice.anchor.kind==="number"){
+     const remain=(cards||[]).filter(c=>!ids.includes(c.card_id));
+     const best=chooseUnoBotColor(remain);
+     const preferred=choice.group.find(c=>c.color===best);
+     if(preferred)final=preferred;
+     if(Number(choice.anchor.value)===7&&room.seven_zero){
+       const targets=players.filter(p=>Number(p.id)!==botId);
+       swapTarget=targets[Math.floor(Math.random()*targets.length)]?.id||null
+     }
+   }
+
+   await db.rpc("color_clash_play_cards",{
+     p_player_id:botId,p_player_token:botToken,p_card_ids:ids,p_final_card_id:final.card_id,
+     p_chosen_color:chosenColor,p_swap_target_id:swapTarget
+   });
+   await loadPlayers();await loadRoom();await maybeUnoBotCallUno(botId,botToken)
+ }finally{
+   unoBotBusy=false;
+   setTimeout(()=>maybeScheduleUnoBot(),100)
+ }
+}
+async function addUnoBots(count){
+ if(!isHost)return;
+ const {error}=await db.rpc("color_clash_add_bots",{p_room_code:roomCode,p_host_id:playerId,p_host_token:token,p_count:count});
+ if(error){$("lobbyMessage").textContent=friendlyError(error);return}
+ await loadPlayers();await refreshUnoBotTokens();renderPlayersLobby()
+}
+async function removeUnoBots(){
+ if(!isHost)return;
+ const {error}=await db.rpc("color_clash_remove_bots",{p_room_code:roomCode,p_host_id:playerId,p_host_token:token});
+ if(error){$("lobbyMessage").textContent=friendlyError(error);return}
+ await loadPlayers();await refreshUnoBotTokens();renderPlayersLobby()
+}
+
 function startTurnTimer(){
  if(timerHandle)clearInterval(timerHandle);
  const tick=async()=>{
@@ -187,7 +290,7 @@ function startTurnTimer(){
   timer.classList.remove("warning","danger");
   if(!room||room.phase!=="playing"||!room.current_player_id){timer.textContent="∞";return}
   const currentId=Number(room.current_player_id);
-  const online=onlinePlayers.has(currentId);
+  const currentPlayer=players.find(p=>Number(p.id)===currentId);const online=!!currentPlayer?.is_bot||onlinePlayers.has(currentId);
   let left=null;
 
   if(!online){
@@ -210,7 +313,7 @@ function startTurnTimer(){
 
 async function showLobby(){
  show("lobbyScreen");$("roomCodeDisplay").textContent=roomCode;
- await loadRoom();await loadPlayers();renderPlayersLobby();
+ await loadRoom();await loadPlayers();if(isHost)await refreshUnoBotTokens();renderPlayersLobby();
  if(isHost&&room){
   stacking=!!room.stacking;jumpIn=!!room.jump_in;sevenZero=!!room.seven_zero;drawUntil=!!room.draw_until_playable;
   challenge4=!!room.challenge_wild4;turnSeconds=[0,15,30,45,60].includes(Number(room.turn_seconds))?Number(room.turn_seconds):30;
@@ -219,7 +322,7 @@ async function showLobby(){
 }
 async function showGame(){
  show("gameScreen");$("gameRoomCode").textContent=roomCode;
- await loadRoom();await loadPlayers();await loadHand();renderTop();renderTurn();startTurnTimer()
+ await loadRoom();await loadPlayers();if(isHost)await refreshUnoBotTokens();await loadHand();renderTop();renderTurn();startTurnTimer()
 }
 async function showResult(){
  show("resultScreen");await loadRoom();await loadPlayers();
@@ -504,6 +607,9 @@ setPair("unoOffBtn","unoOnBtn",v=>unoPenalty=v);
 $("turnTimerSelect").onchange=e=>turnSeconds=Number(e.target.value);
 
 $("createRoomBtn").onclick=createRoom;$("joinRoomBtn").onclick=joinRoom;
+$("unoAddBotBtn").onclick=()=>addUnoBots(1);$("unoAdd5BotBtn").onclick=()=>addUnoBots(5);$("unoRemoveBotsBtn").onclick=removeUnoBots;
+$("unoBotSpeed").onchange=e=>localStorage.setItem("gameAlpiUnoBotSpeed",e.target.value);
+if(localStorage.getItem("gameAlpiUnoBotSpeed"))$("unoBotSpeed").value=localStorage.getItem("gameAlpiUnoBotSpeed");
 $("roomCodeInput").oninput=()=>$("roomCodeInput").value=normCode($("roomCodeInput").value);
 $("startGameBtn").onclick=startGame;$("leaveRoomBtn").onclick=leave;$("drawBtn").onclick=drawCard;
 $("unoBtn").onclick=callUno;$("catchBtn").onclick=catchUno;$("acceptWild4Btn").onclick=accept4;$("challengeWild4Btn").onclick=challengeWild4;$("backLobbyBtn").onclick=backLobby;

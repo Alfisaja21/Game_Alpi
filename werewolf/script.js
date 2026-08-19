@@ -4,6 +4,7 @@ const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const $=id=>document.getElementById(id), STORE="gameAlpiWerewolfV1";
 let roomCode=null,playerId=null,token=null,playerName=null,isHost=false,room=null,players=[],roleInfo=null;
 let roomCh=null,playerCh=null,timer=null,actionBusy=false,timeoutBusy=false;
+let wwBotTokens=new Map(),wwBotTimer=null,wwBotBusy=false;
 
 const ROLE_META={
  wolf:{name:"Werewolf",icon:"🐺",desc:"Pilih korban setiap malam dan menyamar saat diskusi. Werewolf mengetahui anggota Werewolf lain."},
@@ -29,20 +30,87 @@ function showNightNotice(text,secret=false){
 }
 
 async function loadRoom(){const {data}=await db.from("werewolf_rooms").select("*").eq("room_code",roomCode).maybeSingle();room=data;return data}
-async function loadPlayers(){const {data}=await db.from("werewolf_players").select("*").eq("room_code",roomCode).order("seat_order");players=data||[];const me=players.find(p=>p.id===playerId);if(me){isHost=!!me.is_host;save()}return players}
+async function loadPlayers(){const {data}=await db.from("werewolf_players").select("*").eq("room_code",roomCode).order("seat_order");players=data||[];const me=players.find(p=>p.id===playerId);if(me){isHost=!!me.is_host;save()}if(isHost)await refreshWwBotTokens();maybeScheduleWwBots();return players}
 async function loadRole(){if(!playerId)return;const {data,error}=await db.rpc("werewolf_get_my_role",{p_player_id:playerId,p_player_token:token});if(!error&&data?.length)roleInfo=data[0]}
 function me(){return players.find(p=>p.id===playerId)}
 function pname(id){return players.find(p=>p.id===id)?.player_name||"pemain"}
 function phaseLabel(ph){return({night_wolf:"Malam • Werewolf",night_seer:"Malam • Seer",night_doctor:"Malam • Doctor",day_result:"Pagi",discussion:"Diskusi",voting:"Voting",vote_result:"Hasil Voting",finished:"Selesai"})[ph]||"Werewolf"}
 
+
+function wwBotDelay(){return Number($("wwBotSpeed")?.value||localStorage.getItem("gameAlpiWwBotSpeed")||600)}
+async function refreshWwBotTokens(){
+ if(!isHost||!roomCode)return;
+ const {data,error}=await db.rpc("werewolf_get_bot_sessions",{p_room_code:roomCode,p_host_id:playerId,p_host_token:token});
+ if(error)return;
+ wwBotTokens=new Map((data||[]).map(x=>[Number(x.player_id),x.player_token]))
+}
+async function addWwBots(count){
+ const {error}=await db.rpc("werewolf_add_bots",{p_room_code:roomCode,p_host_id:playerId,p_host_token:token,p_count:count});
+ if(error){msg("lobbyMessage",friendly(error));return}
+ await loadPlayers();await refreshWwBotTokens();renderLobby()
+}
+async function removeWwBots(){
+ const {error}=await db.rpc("werewolf_remove_bots",{p_room_code:roomCode,p_host_id:playerId,p_host_token:token});
+ if(error){msg("lobbyMessage",friendly(error));return}
+ await loadPlayers();await refreshWwBotTokens();renderLobby()
+}
+function maybeScheduleWwBots(){
+ if(!isHost||wwBotBusy||wwBotTimer||!room||!roomCode)return;
+ if(!["night_wolf","night_seer","night_doctor","voting"].includes(room.phase))return;
+ const bots=players.filter(p=>p.is_bot&&p.is_alive);
+ if(!bots.length)return;
+ wwBotTimer=setTimeout(async()=>{wwBotTimer=null;await runWwBots()},wwBotDelay())
+}
+async function getWwBotRole(botId,bt){
+ const {data,error}=await db.rpc("werewolf_get_my_role",{p_player_id:botId,p_player_token:bt});
+ return error?null:(data?.[0]||null)
+}
+async function runWwBots(){
+ if(wwBotBusy)return;wwBotBusy=true;
+ try{
+   await loadPlayers();if(!wwBotTokens.size)await refreshWwBotTokens();
+   const bots=players.filter(p=>p.is_bot&&p.is_alive);
+   if(room.phase==="voting"){
+     for(const bot of bots){
+       const bt=wwBotTokens.get(Number(bot.id));if(!bt)continue;
+       const targets=players.filter(p=>p.is_alive&&Number(p.id)!==Number(bot.id));
+       if(!targets.length)continue;
+       const target=targets[Math.floor(Math.random()*targets.length)];
+       const {error}=await db.rpc("werewolf_vote",{p_player_id:bot.id,p_player_token:bt,p_target_id:target.id});
+       if(error&&!/sudah|duplicate|voting/i.test(error.message||""))console.warn(error)
+     }
+     return
+   }
+
+   for(const bot of bots){
+     const bt=wwBotTokens.get(Number(bot.id));if(!bt)continue;
+     const role=await getWwBotRole(bot.id,bt);if(!role)continue;
+     let should=false,targets=[];
+     if(room.phase==="night_wolf"&&role.role==="wolf"){
+       should=true;const wolves=new Set((role.wolf_ids||[]).map(Number));targets=players.filter(p=>p.is_alive&&!wolves.has(Number(p.id)))
+     }else if(room.phase==="night_seer"&&role.role==="seer"){
+       should=true;targets=players.filter(p=>p.is_alive&&Number(p.id)!==Number(bot.id))
+     }else if(room.phase==="night_doctor"&&role.role==="doctor"){
+       should=true;targets=players.filter(p=>p.is_alive)
+     }
+     if(!should||!targets.length)continue;
+     const target=targets[Math.floor(Math.random()*targets.length)];
+     const {error}=await db.rpc("werewolf_night_action",{p_player_id:bot.id,p_player_token:bt,p_target_id:target.id});
+     if(error&&!/giliran|aksi|duplicate/i.test(error.message||""))console.warn(error)
+   }
+ }finally{
+   wwBotBusy=false;setTimeout(()=>maybeScheduleWwBots(),120)
+ }
+}
+
 function renderLobby(){
  $("roomCodeDisplay").textContent=roomCode;$("playerCount").textContent=`${players.length} / 20`;
- $("playersList").innerHTML=players.map(p=>`<div class="player"><div class="player-main"><div class="avatar">${esc(p.player_name[0])}</div><div><b>${esc(p.player_name)}</b><small>${p.is_host?"HOST":"Pemain "+p.seat_order}</small></div></div>${isHost&&!p.is_host?`<button class="kick" data-kick="${p.id}">Kick</button>`:""}</div>`).join("");
+ $("playersList").innerHTML=players.map(p=>`<div class="player"><div class="player-main"><div class="avatar">${esc(p.player_name[0])}</div><div><b>${esc(p.player_name)}${p.is_bot?'<span class="bot-badge">BOT</span>':""}</b><small>${p.is_host?"HOST":p.is_bot?"BOT • Test":"Pemain "+p.seat_order}</small></div></div>${isHost&&!p.is_host?`<button class="kick" data-kick="${p.id}">Kick</button>`:""}</div>`).join("");
  document.querySelectorAll("[data-kick]").forEach(b=>b.onclick=()=>kick(Number(b.dataset.kick)));
  $("hostPanel").classList.toggle("hidden",!isHost);$("startGameBtn").disabled=players.length<5
 }
 function renderAlive(){
- $("aliveSummary").innerHTML=players.map(p=>`<span class="alive-pill ${p.is_alive?"":"dead"}">${p.is_alive?"●":"✕"} ${esc(p.player_name)}</span>`).join("");
+ $("aliveSummary").innerHTML=players.map(p=>`<span class="alive-pill ${p.is_alive?"":"dead"}">${p.is_alive?"●":"✕"} ${esc(p.player_name)}${p.is_bot?" 🤖":""}</span>`).join("");
  $("deadPanel").classList.toggle("hidden",me()?.is_alive!==false)
 }
 function targetButtons(filterFn,callback,label="Pilih"){
@@ -112,7 +180,7 @@ async function renderGame(){
  const instructions={night_wolf:"Werewolf sedang memilih korban.",night_seer:"Seer mendapat kesempatan memeriksa pemain.",night_doctor:"Doctor memilih pemain yang dilindungi.",day_result:"Lihat apa yang terjadi semalam.",discussion:"Diskusikan siapa yang paling mencurigakan.",voting:"Saatnya menentukan pilihan.",vote_result:"Lihat hasil voting."};
  $("phaseInstruction").textContent=instructions[room.phase]||"";
  if(room.phase.startsWith("night_"))renderNight();else if(room.phase==="day_result")renderDay();else if(room.phase==="discussion")renderDiscussion();else if(room.phase==="voting")renderVoting();else if(room.phase==="vote_result")renderVoteResult();
- startTimer()
+ startTimer();maybeScheduleWwBots()
 }
 async function renderFinish(){
  show("finishScreen");await loadPlayers();const town=room.winner==="town";
@@ -148,6 +216,7 @@ $("openRolesBtn").onclick=()=>openSheet("rolesHelpModal");$("lobbyHelpBtn").oncl
 document.querySelectorAll("[data-close-sheet]").forEach(b=>b.onclick=closeSheets);$("closeRoleBtn").onclick=closeSheets;
 $("createRoomBtn").onclick=createRoom;$("joinRoomBtn").onclick=joinRoom;$("roomCodeInput").oninput=()=>$("roomCodeInput").value=normCode($("roomCodeInput").value);
 $("copyCodeBtn").onclick=async()=>{try{await navigator.clipboard.writeText(roomCode);$("copyCodeBtn").textContent="✓";setTimeout(()=>$("copyCodeBtn").textContent="Salin",800)}catch{}};
+$("wwAddBotBtn").onclick=()=>addWwBots(1);$("wwAdd5BotBtn").onclick=()=>addWwBots(5);$("wwRemoveBotsBtn").onclick=removeWwBots;$("wwBotSpeed").onchange=e=>localStorage.setItem("gameAlpiWwBotSpeed",e.target.value);if(localStorage.getItem("gameAlpiWwBotSpeed"))$("wwBotSpeed").value=localStorage.getItem("gameAlpiWwBotSpeed");
 $("startGameBtn").onclick=startGame;$("leaveLobbyBtn").onclick=leave;$("roleBtn").onclick=showRole;$("gameMenuBtn").onclick=()=>openSheet("menuSheet");$("leaveGameBtn").onclick=()=>{if(confirm("Benar-benar keluar dari Werewolf?"))leave()};$("backLobbyBtn").onclick=backLobby;
 
 (async function boot(){const raw=localStorage.getItem(STORE);if(raw){try{const x=JSON.parse(raw);roomCode=x.roomCode;playerId=x.playerId;token=x.token;playerName=x.playerName;isHost=x.isHost;if(roomCode&&playerId&&token){await enter();return}}catch{clear()}}const q=new URLSearchParams(location.search).get("room");if(q){$("roomCodeInput").value=normCode(q);show("setupScreen")}})();

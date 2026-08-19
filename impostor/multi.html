@@ -21,6 +21,20 @@
 <div class="players-header"><div><span class="label-small">PEMAIN</span><strong id="playerCount">0 pemain</strong></div><span class="live-pill"><i></i> Realtime</span></div>
 <div class="players-list" id="playersList"></div>
 <div class="host-controls hidden" id="hostControls">
+<div id="impostorBotTools" class="dev-only dev-tools">
+  <div class="dev-tools-head"><div><span>🧪 TEST TOOLS</span><strong>Bot Impostor</strong></div><b>DEVELOPER</b></div>
+  <p>Tambahkan bot agar room dapat diuji sendirian. Bot otomatis melihat role dan melakukan voting.</p>
+  <div class="bot-tool-actions">
+    <button id="impAddBotBtn">+ 1 BOT</button>
+    <button id="impAdd5BotBtn">+ 5 BOT</button>
+    <button id="impRemoveBotsBtn">Hapus Bot</button>
+  </div>
+  <label>Kecepatan Bot
+    <select id="impBotSpeed"><option value="1300">Normal</option><option value="550" selected>Cepat</option><option value="120">Instan</option></select>
+  </label>
+  <small>Bot V1 tidak berbicara saat diskusi. Mereka dipakai untuk menguji pembagian role, reveal, voting, eliminasi, skor, dan multi-round.</small>
+</div>
+
 <div class="category-section"><div class="category-head"><div><span class="label-small setting-label-with-help">KATEGORI YANG DIMAINKAN<button aria-label="Penjelasan Kategori Yang Dimainkan" class="help-icon" data-help="Pilih kategori yang boleh muncul saat kata diacak. Kamu bisa mengaktifkan satu atau beberapa kategori sekaligus." type="button">?</button></span><strong id="categorySummary">8 kategori aktif</strong></div><div class="category-actions"><button class="tiny-btn" id="selectAllCategoriesBtn">Pilih Semua</button><button class="tiny-btn" id="clearAllCategoriesBtn">Hapus Semua</button></div></div>
 <div class="category-grid" id="categoryGrid"><label class="category-option"><input checked="" type="checkbox" value="Hewan"/><span>🐾 Hewan</span></label><label class="category-option"><input checked="" type="checkbox" value="Benda"/><span>📦 Benda</span></label><label class="category-option"><input checked="" type="checkbox" value="Tempat"/><span>📍 Tempat</span></label><label class="category-option"><input checked="" type="checkbox" value="Makanan"/><span>🍜 Makanan</span></label><label class="category-option"><input checked="" type="checkbox" value="Buah"/><span>🍉 Buah</span></label><label class="category-option"><input checked="" type="checkbox" value="Kendaraan"/><span>🚗 Kendaraan</span></label><label class="category-option"><input checked="" type="checkbox" value="Pekerjaan"/><span>💼 Pekerjaan</span></label><label class="category-option"><input checked="" type="checkbox" value="Olahraga"/><span>⚽ Olahraga</span></label></div></div>
 <div class="control-head impostor-control"><div><span class="label-small setting-label-with-help">JUMLAH IMPOSTOR<button aria-label="Penjelasan Jumlah Impostor" class="help-icon" data-help="Menentukan berapa pemain yang menjadi Impostor. Batas maksimal menyesuaikan jumlah pemain yang ikut." type="button">?</button></span><strong id="impostorHelp">1 impostor</strong></div><div class="stepper"><button id="minusImpostorBtn">−</button><strong id="impostorCountDisplay">1</strong><button id="plusImpostorBtn">＋</button></div></div>
@@ -54,5 +68,5 @@
 <button class="primary-btn hidden" id="continueGameBtn">Lanjut Diskusi</button><button class="primary-btn hidden" id="playAgainBtn">Game Berikutnya</button><button class="secondary-btn hidden" id="finishMatchBtn">Selesai Pertandingan</button><p class="host-hint" id="resultHostHint">Tunggu host.</p><p class="form-message" id="resultMessage"></p></section>
 <section class="hidden" id="finalScreen"><p class="eyebrow">HASIL AKHIR</p><h1 id="finalTitle">🏆 Pemenang Pertandingan</h1><div class="podium" id="finalPodium"></div><details class="history-section" open=""><summary>Riwayat Pertandingan</summary><div class="history-list" id="finalHistory"></div></details><a class="primary-btn final-link" href="index.html">Kembali ke Pilih Mode</a></section>
 </section></main>
-<div aria-live="polite" class="help-popover hidden" id="helpPopover" role="tooltip"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script><script src="multi.js"></script>
+<div aria-live="polite" class="help-popover hidden" id="helpPopover" role="tooltip"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script><script src="../developer.js"></script><script src="multi.js"></script>
 </body></html>

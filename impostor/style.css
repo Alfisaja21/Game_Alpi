@@ -375,3 +375,10 @@ h1,h2,h3,p,strong,span{max-width:100%}
   .mode-grid-clear{grid-template-columns:1fr!important}
   .mode-grid-clear .mode-choice{min-height:0;padding:13px!important}
 }
+
+/* BOT TEST V1 */
+.dev-tools{margin:0 0 10px;padding:11px;border:1px solid rgba(77,169,246,.24);border-radius:13px;background:linear-gradient(145deg,rgba(17,51,82,.8),rgba(12,35,58,.9))}
+.dev-tools-head{display:flex;align-items:center;justify-content:space-between;gap:8px}.dev-tools-head span{display:block;color:#6dbaff;font-size:7px;font-weight:1000;letter-spacing:.12em}.dev-tools-head strong{display:block;margin-top:2px;font-size:11px}.dev-tools-head>b{padding:5px 7px;border-radius:999px;color:#c5e5ff;background:#173c60;font-size:6px}
+.dev-tools>p{margin:6px 0;color:#85a2bf;font-size:8px;line-height:1.45}.bot-tool-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px}.bot-tool-actions button{padding:8px 5px;border:1px solid #2d5b82;border-radius:9px;color:#d8efff;background:#173858;font-size:7px;font-weight:900}.bot-tool-actions button:last-child{color:#ffc1ca;border-color:#5c3040;background:#351d27}
+.dev-tools label{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:7px;color:#8ca8c4;font-size:7px;font-weight:850}.dev-tools select{padding:6px 8px;border:1px solid #2c5173;border-radius:8px;color:#dcefff;background:#112b45;font-size:7px}.dev-tools>small{display:block;margin-top:7px;color:#6f88a5;font-size:7px;line-height:1.45}
+.bot-badge{display:inline-flex;margin-left:4px;padding:2px 4px;border-radius:999px;color:#c3e7ff;background:#174266;font-size:6px;font-weight:1000}

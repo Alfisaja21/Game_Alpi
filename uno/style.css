@@ -154,3 +154,11 @@ h1 small{font-size:.28em;letter-spacing:0;color:#9cb1cd}
   .multi-pick{flex-basis:61px;height:90px}
   .final-color-options{grid-template-columns:1fr 1fr}
 }
+
+/* BOT TEST V1 */
+.dev-tools{margin:0 0 10px;padding:11px;border:1px solid rgba(80,176,255,.25);border-radius:13px;background:linear-gradient(145deg,rgba(18,54,87,.72),rgba(13,36,59,.82))}
+.dev-tools-head{display:flex;align-items:center;justify-content:space-between;gap:8px}.dev-tools-head span{display:block;color:#70baff;font-size:7px;font-weight:1000;letter-spacing:.12em}.dev-tools-head strong{display:block;margin-top:2px;font-size:11px}.dev-tools-head>b{padding:5px 7px;border-radius:999px;color:#bfe3ff;background:#163d62;font-size:6px;letter-spacing:.09em}
+.dev-tools>p{margin:6px 0;color:#87a5c4;font-size:8px;line-height:1.45}.bot-tool-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px}.bot-tool-actions button{padding:8px 5px;border:1px solid #2b5b83;border-radius:9px;color:#d8eeff;background:#163858;font-size:7px;font-weight:900}.bot-tool-actions button:last-child{color:#ffc0ca;border-color:#5d3040;background:#351c27}
+.dev-tools label{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:7px;color:#8eabc8;font-size:7px;font-weight:850}.dev-tools select{padding:6px 8px;border:1px solid #2d5275;border-radius:8px;color:#d9edff;background:#112b45;font-size:7px}.dev-tools>small{display:block;margin-top:7px;color:#6f8aa8;font-size:7px;line-height:1.45}
+.bot-badge{display:inline-flex;margin-left:4px;padding:2px 4px;border-radius:999px;color:#bde4ff;background:#173f64;font-size:6px;font-weight:1000;vertical-align:middle}
+.opponent.bot .opp-avatar{filter:none!important;opacity:1!important}.opponent.bot .opp-online:before{background:#69bfff!important}.opponent.bot .opp-online{color:#8ecaff!important}

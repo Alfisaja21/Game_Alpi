@@ -12,6 +12,7 @@
  <p class="lead">Catur standar dengan langkah legal, check, checkmate, stalemate, castling, en passant, dan promotion.</p>
  <div class="mode-grid">
   <button id="multiModeBtn"><span>📱📱</span><b>Multi HP</b><small>2 pemain memakai HP masing-masing melalui room online.</small></button>
+  <button id="botModeBtn" class="bot-mode"><span>🤖</span><b>Lawan Bot</b><small>Main sendiri melawan BOT Alpi. Pilih level mudah, normal, atau sulit.</small></button>
   <button id="singleModeBtn"><span>📱</span><b>1 HP</b><small>Pass-and-play. Papan otomatis berputar ke pemain yang sedang mendapat giliran.</small></button>
  </div>
  <button id="rulesBtn" class="text-btn">? Cara Main & Fitur</button>
@@ -73,6 +74,37 @@
 </main>
 
 
+
+<div id="botSetupModal" class="sheet hidden">
+ <div class="sheet-card bot-setup">
+  <div class="handle"></div>
+  <p class="eyebrow">LAWAN BOT</p>
+  <h2>Atur pertandingan</h2>
+  <p>Bot berjalan langsung di browser. Tidak membutuhkan room atau Supabase.</p>
+  <label>Level Bot</label>
+  <select id="chessBotDifficulty">
+   <option value="easy">Mudah</option>
+   <option value="normal" selected>Normal</option>
+   <option value="hard">Sulit</option>
+  </select>
+  <label>Warna kamu</label>
+  <select id="chessBotColor">
+   <option value="random" selected>Acak</option>
+   <option value="w">Putih</option>
+   <option value="b">Hitam</option>
+  </select>
+  <label>Timer per pemain</label>
+  <select id="chessBotTime">
+   <option value="0">Tanpa batas</option>
+   <option value="300">5 menit</option>
+   <option value="600" selected>10 menit</option>
+   <option value="900">15 menit</option>
+  </select>
+  <button id="startBotGameBtn" class="big-btn primary">MULAI VS BOT</button>
+  <button class="sheet-cancel" data-close-sheet>Batal</button>
+ </div>
+</div>
+
 <div id="singleSetupModal" class="sheet hidden">
  <div class="sheet-card single-setup">
   <div class="handle"></div>
@@ -98,5 +130,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chess.js@0.10.3/chess.min.js"></script>
+<script src="../developer.js"></script>
 <script src="script.js"></script>
 </body></html>

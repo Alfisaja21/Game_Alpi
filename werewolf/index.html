@@ -54,6 +54,16 @@
   <div id="playersList" class="players"></div>
 
   <div id="hostPanel" class="host-panel hidden">
+    <div id="wwBotTools" class="dev-only dev-tools">
+      <div class="dev-tools-head"><div><span>🧪 TEST TOOLS</span><strong>Bot Werewolf</strong></div><b>DEVELOPER</b></div>
+      <p>Bot mengisi kursi dan menjalankan aksi malam serta voting secara otomatis.</p>
+      <div class="bot-tool-actions"><button id="wwAddBotBtn">+ 1 BOT</button><button id="wwAdd5BotBtn">+ 5 BOT</button><button id="wwRemoveBotsBtn">Hapus Bot</button></div>
+      <label>Kecepatan Bot
+        <select id="wwBotSpeed"><option value="1400">Normal</option><option value="600" selected>Cepat</option><option value="150">Instan</option></select>
+      </label>
+      <small>Bot V1 tidak melakukan percakapan saat diskusi. Target malam dan voting dipilih sederhana/random untuk menguji alur game.</small>
+    </div>
+
     <div class="auto-role">
       <span>🎭 Role dibagi otomatis</span>
       <small>Werewolf menyesuaikan jumlah pemain + 1 Seer + 1 Doctor + Warga.</small>
@@ -167,6 +177,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../developer.js"></script>
 <script src="script.js"></script>
 </body>
 </html>
