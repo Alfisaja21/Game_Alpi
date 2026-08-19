@@ -72,6 +72,25 @@
 </section>
 </main>
 
+
+<div id="singleSetupModal" class="sheet hidden">
+ <div class="sheet-card single-setup">
+  <div class="handle"></div>
+  <p class="eyebrow">CATUR 1 HP</p>
+  <h2>Pilih timer</h2>
+  <p>Satu HP dioper bergantian. Papan akan berputar otomatis setelah setiap langkah.</p>
+  <label>Waktu per pemain</label>
+  <select id="singleTimeControl">
+   <option value="0">Tanpa batas</option>
+   <option value="300">5 menit</option>
+   <option value="600" selected>10 menit</option>
+   <option value="900">15 menit</option>
+  </select>
+  <button id="startSingleBtn" class="big-btn primary">MULAI 1 HP</button>
+  <button class="sheet-cancel" data-close-sheet>Batal</button>
+ </div>
+</div>
+
 <div id="promotionModal" class="sheet hidden"><div class="sheet-card"><div class="handle"></div><h2>Pilih Promotion</h2><div id="promotionChoices" class="promotion-grid"></div><button class="sheet-cancel" data-close-sheet>Batal</button></div></div>
 <div id="rulesModal" class="sheet hidden"><div class="sheet-card"><div class="handle"></div><h2>Catur • Game Alpi</h2><div class="rules">
  <p><b>Tujuan</b>Checkmate raja lawan.</p><p><b>Multi HP</b>Putih/hitam diacak. Semua langkah disinkronkan realtime.</p><p><b>1 HP</b>Setelah langkah selesai, papan otomatis berputar mengikuti giliran.</p><p><b>Fitur</b>Castling, en passant, promotion, check, checkmate, stalemate, seri, menyerah, rematch, dan timer.</p></div><button class="big-btn primary" data-close-sheet>Mengerti</button></div></div>

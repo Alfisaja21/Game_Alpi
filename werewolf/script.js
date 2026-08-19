@@ -20,6 +20,13 @@ function show(id){["introScreen","setupScreen","lobbyScreen","gameScreen","finis
 function openSheet(id){$(id).classList.remove("hidden")} function closeSheets(){document.querySelectorAll(".sheet").forEach(x=>x.classList.add("hidden"))}
 function msg(id,text){$(id).textContent=text||""}
 function friendly(e){const s=String(e?.message||e||"Terjadi kesalahan");if(/schema cache|not find the function/i.test(s))return"Database Werewolf belum memakai SQL V1.";return s}
+let nightNoticeTimer=null;
+function showNightNotice(text,secret=false){
+ let el=document.getElementById("nightActionNotice");
+ if(!el){el=document.createElement("div");el.id="nightActionNotice";el.className="night-notice";document.body.appendChild(el)}
+ el.textContent=text;el.classList.toggle("secret",secret);el.classList.add("show");
+ clearTimeout(nightNoticeTimer);nightNoticeTimer=setTimeout(()=>el.classList.remove("show"),3600)
+}
 
 async function loadRoom(){const {data}=await db.from("werewolf_rooms").select("*").eq("room_code",roomCode).maybeSingle();room=data;return data}
 async function loadPlayers(){const {data}=await db.from("werewolf_players").select("*").eq("room_code",roomCode).order("seat_order");players=data||[];const me=players.find(p=>p.id===playerId);if(me){isHost=!!me.is_host;save()}return players}
@@ -44,10 +51,19 @@ function targetButtons(filterFn,callback,label="Pilih"){
 }
 async function submitNight(targetId){
  if(actionBusy)return;actionBusy=true;
+ const roleAtAction=roleInfo?.role;
+ const targetName=pname(targetId);
  const {data,error}=await db.rpc("werewolf_night_action",{p_player_id:playerId,p_player_token:token,p_target_id:targetId});
  if(error)alert(friendly(error));else{
   document.querySelectorAll("[data-target]").forEach(b=>{b.disabled=true;b.classList.toggle("selected",Number(b.dataset.target)===targetId)});
-  if(data?.seer_result){$("seerResult").classList.remove("hidden");$("seerResult").textContent=data.seer_result==="wolf"?`🔮 ${pname(targetId)} adalah WEREWOLF.`:`🔮 ${pname(targetId)} bukan Werewolf.`}
+  if(data?.seer_result){
+   const text=data.seer_result==="wolf"?`🔮 ${targetName} adalah WEREWOLF.`:`🔮 ${targetName} bukan Werewolf.`;
+   $("seerResult").classList.remove("hidden");$("seerResult").textContent=text;showNightNotice(text,true)
+  }else if(roleAtAction==="wolf"){
+   showNightNotice(`🐺 Pilihan Werewolf untuk ${targetName} sudah tersimpan.`)
+  }else if(roleAtAction==="doctor"){
+   showNightNotice(`🩺 Perlindungan untuk ${targetName} sudah tersimpan.`)
+  }
  }
  actionBusy=false
 }

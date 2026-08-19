@@ -64,10 +64,17 @@ function endReason(){
  return null
 }
 async function doMove(from,to,promotion){
- actionBusy=true;const before=game.fen(),move=game.move({from,to,promotion});if(!move){actionBusy=false;return}
+ actionBusy=true;
+ const movingColor=game.turn();
+ if(mode==="single"&&local.timeSec>0){
+  const nowTimes=localTimes();
+  if(nowTimes[movingColor]<=0){actionBusy=false;finishLocalTimeout(movingColor);return}
+ }
+ const before=game.fen(),move=game.move({from,to,promotion});if(!move){actionBusy=false;return}
  selected=null;legal=[];const after=game.fen(),ending=endReason();
  if(mode==="single"){
-  updateLocalClock();if(ending){local.finished=true;local.result=ending.result;local.reason=ending.reason}else local.turnStarted=Date.now();
+  updateLocalClock(movingColor);
+  if(ending){local.finished=true;local.result=ending.result;local.reason=ending.reason}else local.turnStarted=Date.now();
   orientation=game.turn();renderGame();if(ending)showFinishLocal()
  }else{
   const {error}=await db.rpc("chess_make_move",{p_player_id:playerId,p_player_token:token,p_expected_fen:before,p_new_fen:after,p_san:move.san,p_from:from,p_to:to,p_promotion:promotion,p_result:ending?.result||null,p_reason:ending?.reason||null});
@@ -82,7 +89,7 @@ function remoteTimes(){
  if(room?.phase==="playing"&&room.time_control_sec>0&&room.turn_started_at){const e=Math.max(0,Date.now()-new Date(room.turn_started_at).getTime());if(room.turn_color==="w")w-=e;else b-=e}
  return{w:Math.max(0,w),b:Math.max(0,b)}
 }
-function updateLocalClock(){if(local.timeSec===0)return;const e=Date.now()-local.turnStarted;if(game.turn()==="w")local.whiteMs=Math.max(0,local.whiteMs-e);else local.blackMs=Math.max(0,local.blackMs-e)}
+function updateLocalClock(color){if(local.timeSec===0)return;const e=Date.now()-local.turnStarted;if(color==="w")local.whiteMs=Math.max(0,local.whiteMs-e);else local.blackMs=Math.max(0,local.blackMs-e)}
 function localTimes(){
  let w=local.whiteMs,b=local.blackMs;if(!local.finished&&local.timeSec>0){const e=Date.now()-local.turnStarted;if(game.turn()==="w")w-=e;else b-=e}return{w:Math.max(0,w),b:Math.max(0,b)}
 }
@@ -135,18 +142,27 @@ async function offerDraw(){if(mode==="single"){if(confirm("Kedua pemain sepakat 
 async function respondDraw(accept){const {error}=await db.rpc("chess_respond_draw",{p_player_id:playerId,p_player_token:token,p_accept:accept});if(error)alert(friendly(error))}
 async function resign(){if(!confirm("Yakin ingin menyerah?"))return;if(mode==="single"){local.finished=true;local.result=opp(game.turn());local.reason=`${colorName(game.turn())} menyerah`;showFinishLocal()}else{const {error}=await db.rpc("chess_resign",{p_player_id:playerId,p_player_token:token});if(error)alert(friendly(error))}}
 function showFinishRemote(){
- show("finishScreen");const win=room.winner_color,draw=win==="draw";$("finishTitle").textContent=draw?"Seri":`${colorName(win)} Menang`;$("finishReason").textContent=room.result_reason||"Partai selesai.";$("rematchBtn").textContent=room[`rematch_${pcolor()==="w"?"white":"black"}`]?"Menunggu Lawan...":"Rematch";$("rematchHint").textContent="Rematch dimulai jika kedua pemain setuju."
+ if(clockTimer)clearInterval(clockTimer);
+ show("finishScreen");const win=room.winner_color,draw=win==="draw";$("finishTitle").textContent=draw?"Seri":`${colorName(win)} Menang`;$("finishReason").textContent=room.result_reason||"Partai selesai.";
+ const canRematch=players.length===2;
+ $("rematchBtn").classList.toggle("hidden",!canRematch);
+ if(canRematch){
+  $("rematchBtn").textContent=room[`rematch_${pcolor()==="w"?"white":"black"}`]?"Menunggu Lawan...":"Rematch";
+  $("rematchHint").textContent="Rematch dimulai jika kedua pemain setuju.";
+ }else{
+  $("rematchHint").textContent="Lawan sudah keluar dari room. Mulai room baru untuk bermain lagi.";
+ }
 }
-function showFinishLocal(){show("finishScreen");$("finishTitle").textContent=local.result==="draw"?"Seri":`${colorName(local.result)} Menang`;$("finishReason").textContent=local.reason;$("rematchBtn").textContent="Rematch";$("rematchHint").textContent=""}
+function showFinishLocal(){if(clockTimer)clearInterval(clockTimer);show("finishScreen");$("finishTitle").textContent=local.result==="draw"?"Seri":`${colorName(local.result)} Menang`;$("finishReason").textContent=local.reason;$("rematchBtn").classList.remove("hidden");$("rematchBtn").textContent="Rematch";$("rematchHint").textContent=""}
 function finishLocalTimeout(c){if(local.finished)return;local.finished=true;local.result=opp(c);local.reason=`Waktu ${colorName(c)} habis`;showFinishLocal()}
 async function rematch(){if(mode==="single"){startSingle(local.timeSec);return}const {error}=await db.rpc("chess_rematch",{p_player_id:playerId,p_player_token:token});if(error)alert(friendly(error))}
 async function leave(){if(mode==="single"){show("modeScreen");return}const {error}=await db.rpc("chess_leave_room",{p_player_id:playerId,p_player_token:token});if(error)alert(friendly(error));else leaveLocal("")}
 async function leaveLocal(text){if(channelRoom)await db.removeChannel(channelRoom);if(channelPlayers)await db.removeChannel(channelPlayers);clear();mode=roomCode=playerId=token=playerName=null;room=null;players=[];game=null;show("multiSetupScreen");$("setupMessage").textContent=text||""}
 function startSingle(sec=600){mode="single";game=new Chess();local={whiteName:"Putih",blackName:"Hitam",timeSec:sec,whiteMs:sec*1000,blackMs:sec*1000,turnStarted:Date.now(),finished:false,result:null,reason:""};orientation="w";renderGame()}
 
-$("multiModeBtn").onclick=()=>{mode="multi";show("multiSetupScreen")};$("singleModeBtn").onclick=()=>{const v=prompt("Timer per pemain (0 tanpa batas, 5, 10, atau 15 menit):","10");const min=[0,5,10,15].includes(Number(v))?Number(v):10;startSingle(min*60)};$("backModeBtn").onclick=()=>show("modeScreen");
+$("multiModeBtn").onclick=()=>{mode="multi";show("multiSetupScreen")};$("singleModeBtn").onclick=()=>openSheet("singleSetupModal");$("startSingleBtn").onclick=()=>{const sec=Number($("singleTimeControl").value);closeSheets();startSingle([0,300,600,900].includes(sec)?sec:600)};$("backModeBtn").onclick=()=>show("modeScreen");
 $("rulesBtn").onclick=()=>openSheet("rulesModal");$("menuRulesBtn").onclick=()=>{closeSheets();openSheet("rulesModal")};document.querySelectorAll("[data-close-sheet]").forEach(b=>b.onclick=closeSheets);
 $("createRoomBtn").onclick=createRoom;$("joinRoomBtn").onclick=joinRoom;$("roomCodeInput").oninput=()=>$("roomCodeInput").value=normCode($("roomCodeInput").value);$("copyCodeBtn").onclick=async()=>{try{await navigator.clipboard.writeText(roomCode);$("copyCodeBtn").textContent="✓";setTimeout(()=>$("copyCodeBtn").textContent="Salin",800)}catch{}};
 $("startGameBtn").onclick=startRemote;$("leaveLobbyBtn").onclick=leave;$("drawBtn").onclick=offerDraw;$("resignBtn").onclick=resign;$("acceptDrawBtn").onclick=()=>respondDraw(true);$("declineDrawBtn").onclick=()=>respondDraw(false);$("rematchBtn").onclick=rematch;
-$("gameMenuBtn").onclick=()=>openSheet("menuModal");$("leaveGameBtn").onclick=()=>{closeSheets();leave()};$("finishHomeBtn").onclick=()=>{if(mode==="single")show("modeScreen");else leave()};
+$("gameMenuBtn").onclick=()=>openSheet("menuModal");$("leaveGameBtn").onclick=()=>{closeSheets();if(confirm("Keluar dari pertandingan Catur? Jika Multi HP, lawan akan menang."))leave()};$("finishHomeBtn").onclick=()=>{if(mode==="single")show("modeScreen");else leave()};
 (async function boot(){const raw=localStorage.getItem(STORE);if(raw){try{const x=JSON.parse(raw);if(x.mode==="multi"&&x.roomCode&&x.playerId&&x.token){Object.assign(window,{ });mode=x.mode;roomCode=x.roomCode;playerId=x.playerId;token=x.token;playerName=x.playerName;isHost=x.isHost;await enter();return}}catch{clear()}}const q=new URLSearchParams(location.search).get("room");if(q){$("roomCodeInput").value=normCode(q);show("multiSetupScreen")}})();

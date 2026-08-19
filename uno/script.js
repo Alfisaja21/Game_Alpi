@@ -45,13 +45,13 @@ function toast(text){
  if(!t){t=document.createElement("div");t.id="gameToast";t.className="game-toast";document.body.appendChild(t)}
  t.textContent=text;t.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("show"),1800)
 }
-function showDrawNotice(count,{penalty=false,nextName="",title=null}={}){
+function showDrawNotice(count,{penalty=false,nextName="",title=null,detail="",footerText=""}={}){
  $("drawNoticeIcon").textContent=penalty?"⚠️":"🃏";
  $("drawNoticeTitle").textContent=title||`+${count} KARTU`;
- $("drawNoticeText").textContent=penalty?`Kamu mengambil ${count} kartu penalti.`:`Kamu mengambil ${count} kartu.`;
- $("drawNoticeNext").textContent=nextName?`Giliran berikutnya: ${nextName}`:"";
+ $("drawNoticeText").textContent=detail||(penalty?`Kamu mengambil ${count} kartu penalti.`:`Kamu mengambil ${count} kartu.`);
+ $("drawNoticeNext").textContent=footerText||(nextName?`Giliran berikutnya: ${nextName}`:"");
  $("drawNotice").classList.remove("hidden");
- setTimeout(()=>$("drawNotice").classList.add("hidden"),1350);
+ setTimeout(()=>$("drawNotice").classList.add("hidden"),1550);
 }
 
 async function loadRoom(){
@@ -168,10 +168,17 @@ function renderTurn(){
  renderOpponents()
 }
 
-async function timeoutTurn(){
+async function timeoutTurn(offline=false,currentId=null){
  if(timeoutBusy||!roomCode)return;
  timeoutBusy=true;
- try{await db.rpc("color_clash_timeout_turn",{p_room_code:roomCode})}finally{setTimeout(()=>timeoutBusy=false,900)}
+ try{
+  if(offline&&currentId&&Number(currentId)!==Number(playerId)){
+   const {error}=await db.rpc("color_clash_offline_timeout",{p_reporter_id:playerId,p_reporter_token:token,p_offline_player_id:Number(currentId)});
+   if(error&&!/schema cache|not find the function/i.test(String(error.message||"")))console.warn(error);
+  }else{
+   await db.rpc("color_clash_timeout_turn",{p_room_code:roomCode});
+  }
+ }finally{setTimeout(()=>timeoutBusy=false,900)}
 }
 function startTurnTimer(){
  if(timerHandle)clearInterval(timerHandle);
@@ -196,7 +203,7 @@ function startTurnTimer(){
   timer.textContent=`${left}s`;
   if(left<=10)timer.classList.add("warning");
   if(left<=5)timer.classList.add("danger");
-  if(left<=0)await timeoutTurn()
+  if(left<=0)await timeoutTurn(!online,currentId)
  };
  tick();timerHandle=setInterval(tick,500)
 }
@@ -337,13 +344,26 @@ async function drawCard(){
  if(actionBusy||!isMyTurn())return;
  setBusy(true,$("drawBtn"));$("gameMessage").textContent="";
  try{
-  const before=hand.length;
+  const beforeIds=new Set(hand.map(c=>c.card_id));
+  const beforeCount=hand.length;
   const {data,error}=await db.rpc("color_clash_draw",{p_player_id:playerId,p_player_token:token});
   if(error){$("gameMessage").textContent=friendlyError(error);return}
   await refreshGameState();renderTop();renderTurn();
-  const count=Number(data?.drawn??Math.max(0,hand.length-before));
+  const count=Number(data?.drawn??Math.max(0,hand.length-beforeCount));
   const next=players.find(p=>p.id===room?.current_player_id);
-  showDrawNotice(count,{penalty:data?.status==="penalty_draw",nextName:next?.player_name||""})
+  const fresh=hand.filter(c=>!beforeIds.has(c.card_id));
+  let detail="";
+  if(count===1&&fresh.length===1){
+   const c=fresh[0];
+   detail=c.color?`Kamu mendapat ${colorName(c.color)} ${cardText(c)}.`:`Kamu mendapat ${cardText(c)}.`;
+  }
+  const playable=data?.status==="playable_drawn";
+  showDrawNotice(count,{
+   penalty:data?.status==="penalty_draw",
+   nextName:playable?"":(next?.player_name||""),
+   detail,
+   footerText:playable?"Ada kartu yang bisa dimainkan • giliran tetap kamu":""
+  })
  }finally{setBusy(false,$("drawBtn"))}
 }
 
