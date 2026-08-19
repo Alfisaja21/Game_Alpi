@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#07111f">
-  <title>Room Test • Game Alpi</title>
+  <title>Room Test V2 • Game Alpi</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -18,21 +18,21 @@
       </div>
 
       <div id="setupScreen">
-        <p class="eyebrow">SUPABASE MULTIPLAYER TEST</p>
+        <p class="eyebrow">SUPABASE MULTIPLAYER TEST V2</p>
         <h1>Room Test</h1>
-        <p class="subtitle">Buat room di satu HP, lalu gabung menggunakan kode yang sama dari HP lain.</p>
+        <p class="subtitle">Buat room di satu HP, lalu gabung dari HP lain menggunakan kode yang sama.</p>
 
         <label class="label" for="playerName">Nama pemain</label>
-        <input id="playerName" class="text-input" maxlength="20" autocomplete="nickname" placeholder="Contoh: Alfi">
+        <input id="playerName" class="text-input" maxlength="20" placeholder="Contoh: Alfi">
 
-        <button id="createRoomBtn" class="primary-btn"><span>＋</span>Buat Room Baru</button>
+        <button id="createRoomBtn" class="primary-btn">＋ Buat Room Baru</button>
 
         <div class="divider"><span>ATAU</span></div>
 
         <label class="label" for="roomCodeInput">Kode room</label>
         <input id="roomCodeInput" class="text-input code-input" maxlength="6" inputmode="numeric" placeholder="123456">
 
-        <button id="joinRoomBtn" class="secondary-btn">Gabung Room <span>→</span></button>
+        <button id="joinRoomBtn" class="secondary-btn">Gabung Room →</button>
         <p id="setupMessage" class="form-message"></p>
       </div>
 
@@ -61,13 +61,24 @@
 
         <div id="playersList" class="players-list"></div>
 
-        <div class="info-box">
-          <strong>Uji dari 2 HP</strong>
-          <p>Buka Game Alpi di HP kedua, masuk ke Room Test, lalu gabung menggunakan kode di atas.</p>
-        </div>
+        <button id="startGameBtn" class="start-btn hidden">Mulai Game</button>
+        <p id="hostHint" class="host-hint hidden">Hanya host yang dapat memulai game.</p>
 
         <p id="lobbyMessage" class="form-message"></p>
         <button id="leaveRoomBtn" class="danger-btn">Keluar dari Room</button>
+      </div>
+
+      <div id="gameScreen" class="hidden">
+        <p class="eyebrow">STATUS ROOM</p>
+        <h1>Game Dimulai</h1>
+        <div class="game-start-box">
+          <div class="pulse-ring">🎮</div>
+          <h2>Semua pemain sudah tersinkron</h2>
+          <p>Host telah menekan tombol Mulai Game. Kedua HP seharusnya masuk ke layar ini otomatis tanpa refresh.</p>
+          <div class="mini-room">Room <strong id="gameRoomCode">------</strong></div>
+        </div>
+        <button id="backLobbyBtn" class="secondary-btn hidden">Kembali ke Lobby</button>
+        <p id="gameMessage" class="form-message"></p>
       </div>
     </section>
   </main>

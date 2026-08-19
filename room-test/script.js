@@ -4,27 +4,39 @@ const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
 const setupScreen = document.getElementById("setupScreen");
 const lobbyScreen = document.getElementById("lobbyScreen");
+const gameScreen = document.getElementById("gameScreen");
+
 const playerNameInput = document.getElementById("playerName");
 const roomCodeInput = document.getElementById("roomCodeInput");
 const createRoomBtn = document.getElementById("createRoomBtn");
 const joinRoomBtn = document.getElementById("joinRoomBtn");
 const setupMessage = document.getElementById("setupMessage");
+
 const connectionBadge = document.getElementById("connectionBadge");
 const connectionText = document.getElementById("connectionText");
+
 const roomCodeDisplay = document.getElementById("roomCodeDisplay");
 const copyCodeBtn = document.getElementById("copyCodeBtn");
 const playersList = document.getElementById("playersList");
 const playerCount = document.getElementById("playerCount");
 const hostBadge = document.getElementById("hostBadge");
+const startGameBtn = document.getElementById("startGameBtn");
+const hostHint = document.getElementById("hostHint");
 const leaveRoomBtn = document.getElementById("leaveRoomBtn");
 const lobbyMessage = document.getElementById("lobbyMessage");
+
+const gameRoomCode = document.getElementById("gameRoomCode");
+const backLobbyBtn = document.getElementById("backLobbyBtn");
+const gameMessage = document.getElementById("gameMessage");
 
 let currentRoomCode = null;
 let currentPlayerId = null;
 let currentPlayerName = null;
 let currentIsHost = false;
-let realtimeChannel = null;
-const STORAGE_KEY = "gameAlpiRoomTestSession";
+let playerChannel = null;
+let roomChannel = null;
+
+const STORAGE_KEY = "gameAlpiRoomTestSessionV4";
 
 function setConnection(status, text) {
   connectionBadge.classList.remove("connected", "error");
@@ -45,11 +57,6 @@ function generateRoomCode() {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
 
-function setBusy(busy) {
-  createRoomBtn.disabled = busy;
-  joinRoomBtn.disabled = busy;
-}
-
 function saveSession() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({
     roomCode: currentRoomCode,
@@ -63,18 +70,43 @@ function clearSession() {
   localStorage.removeItem(STORAGE_KEY);
 }
 
-function showSetup() {
-  setupScreen.classList.remove("hidden");
+function hideAllScreens() {
+  setupScreen.classList.add("hidden");
   lobbyScreen.classList.add("hidden");
-  hostBadge.classList.add("hidden");
-  lobbyMessage.textContent = "";
+  gameScreen.classList.add("hidden");
+}
+
+function showSetup() {
+  hideAllScreens();
+  setupScreen.classList.remove("hidden");
 }
 
 function showLobby() {
-  setupScreen.classList.add("hidden");
+  hideAllScreens();
   lobbyScreen.classList.remove("hidden");
   roomCodeDisplay.textContent = currentRoomCode;
-  currentIsHost ? hostBadge.classList.remove("hidden") : hostBadge.classList.add("hidden");
+
+  if (currentIsHost) {
+    hostBadge.classList.remove("hidden");
+    startGameBtn.classList.remove("hidden");
+    hostHint.classList.add("hidden");
+  } else {
+    hostBadge.classList.add("hidden");
+    startGameBtn.classList.add("hidden");
+    hostHint.classList.remove("hidden");
+  }
+}
+
+function showGame() {
+  hideAllScreens();
+  gameScreen.classList.remove("hidden");
+  gameRoomCode.textContent = currentRoomCode;
+
+  if (currentIsHost) {
+    backLobbyBtn.classList.remove("hidden");
+  } else {
+    backLobbyBtn.classList.add("hidden");
+  }
 }
 
 function escapeHtml(value) {
@@ -89,14 +121,9 @@ function escapeHtml(value) {
 function renderPlayers(players) {
   playerCount.textContent = `${players.length} pemain`;
 
-  if (!players.length) {
-    playersList.innerHTML = '<div class="player-row"><span class="you">Belum ada pemain.</span></div>';
-    return;
-  }
-
   playersList.innerHTML = players.map((player) => {
     const isYou = String(player.id) === String(currentPlayerId);
-    const initial = (player.player_name || "?").trim().charAt(0).toUpperCase();
+    const initial = (player.player_name || "?").charAt(0).toUpperCase();
 
     return `
       <div class="player-row">
@@ -123,25 +150,48 @@ async function loadPlayers() {
     .order("created_at", { ascending: true });
 
   if (error) {
-    lobbyMessage.textContent = "Gagal membaca daftar pemain: " + error.message;
+    lobbyMessage.textContent = error.message;
     return;
   }
 
   renderPlayers(data || []);
 }
 
-async function unsubscribeRoom() {
-  if (realtimeChannel) {
-    await db.removeChannel(realtimeChannel);
-    realtimeChannel = null;
+async function loadRoomStatus() {
+  if (!currentRoomCode) return;
+
+  const { data, error } = await db
+    .from("rooms")
+    .select("room_code, game_status")
+    .eq("room_code", currentRoomCode)
+    .maybeSingle();
+
+  if (error || !data) return;
+
+  if (data.game_status === "playing") {
+    showGame();
+  } else {
+    showLobby();
   }
 }
 
-async function subscribeToRoom() {
-  await unsubscribeRoom();
+async function unsubscribeRealtime() {
+  if (playerChannel) {
+    await db.removeChannel(playerChannel);
+    playerChannel = null;
+  }
 
-  realtimeChannel = db
-    .channel(`room-${currentRoomCode}-${Date.now()}`)
+  if (roomChannel) {
+    await db.removeChannel(roomChannel);
+    roomChannel = null;
+  }
+}
+
+async function subscribeRealtime() {
+  await unsubscribeRealtime();
+
+  playerChannel = db
+    .channel(`players-${currentRoomCode}-${Date.now()}`)
     .on(
       "postgres_changes",
       {
@@ -152,17 +202,37 @@ async function subscribeToRoom() {
       },
       () => loadPlayers()
     )
+    .subscribe();
+
+  roomChannel = db
+    .channel(`room-status-${currentRoomCode}-${Date.now()}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "UPDATE",
+        schema: "public",
+        table: "rooms",
+        filter: `room_code=eq.${currentRoomCode}`
+      },
+      (payload) => {
+        const status = payload.new.game_status;
+
+        if (status === "playing") showGame();
+        if (status === "waiting") showLobby();
+      }
+    )
     .subscribe((status) => {
-      if (status === "SUBSCRIBED") setConnection("connected", "Supabase Realtime terhubung");
-      if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") setConnection("error", "Realtime gagal terhubung");
+      if (status === "SUBSCRIBED") {
+        setConnection("connected", "Supabase Realtime terhubung");
+      }
     });
 }
 
-async function enterLobby() {
-  showLobby();
+async function enterRoom() {
   saveSession();
   await loadPlayers();
-  await subscribeToRoom();
+  await loadRoomStatus();
+  await subscribeRealtime();
 }
 
 async function createRoom() {
@@ -170,22 +240,25 @@ async function createRoom() {
 
   if (!name) {
     setupMessage.textContent = "Isi nama pemain terlebih dahulu.";
-    playerNameInput.focus();
     return;
   }
 
+  createRoomBtn.disabled = true;
   setupMessage.textContent = "";
-  setBusy(true);
 
   try {
     let createdRoom = null;
 
-    for (let attempt = 0; attempt < 8; attempt++) {
+    for (let i = 0; i < 8; i++) {
       const code = generateRoomCode();
 
       const { data, error } = await db
         .from("rooms")
-        .insert({ room_code: code, host_name: name })
+        .insert({
+          room_code: code,
+          host_name: name,
+          game_status: "waiting"
+        })
         .select("room_code")
         .single();
 
@@ -197,7 +270,7 @@ async function createRoom() {
       if (error.code !== "23505") throw error;
     }
 
-    if (!createdRoom) throw new Error("Gagal membuat kode room unik. Coba lagi.");
+    if (!createdRoom) throw new Error("Gagal membuat kode room.");
 
     const { data: player, error: playerError } = await db
       .from("players")
@@ -216,11 +289,11 @@ async function createRoom() {
     currentPlayerName = player.player_name;
     currentIsHost = true;
 
-    await enterLobby();
+    await enterRoom();
   } catch (error) {
-    setupMessage.textContent = "Gagal membuat room: " + (error.message || "Unknown error");
+    setupMessage.textContent = "Gagal membuat room: " + error.message;
   } finally {
-    setBusy(false);
+    createRoomBtn.disabled = false;
   }
 }
 
@@ -228,48 +301,34 @@ async function joinRoom() {
   const name = normalizeName(playerNameInput.value);
   const code = normalizeRoomCode(roomCodeInput.value);
 
-  if (!name) {
-    setupMessage.textContent = "Isi nama pemain terlebih dahulu.";
-    playerNameInput.focus();
+  if (!name || code.length !== 6) {
+    setupMessage.textContent = "Isi nama dan kode room 6 digit.";
     return;
   }
 
-  if (code.length !== 6) {
-    setupMessage.textContent = "Kode room harus terdiri dari 6 angka.";
-    roomCodeInput.focus();
-    return;
-  }
-
+  joinRoomBtn.disabled = true;
   setupMessage.textContent = "";
-  setBusy(true);
 
   try {
     const { data: room, error: roomError } = await db
       .from("rooms")
-      .select("room_code")
+      .select("room_code, game_status")
       .eq("room_code", code)
       .maybeSingle();
 
     if (roomError) throw roomError;
-
     if (!room) {
-      setupMessage.textContent = "Room tidak ditemukan. Periksa kembali kodenya.";
+      setupMessage.textContent = "Room tidak ditemukan.";
       return;
     }
 
-    const { data: names, error: nameError } = await db
+    const { data: existing } = await db
       .from("players")
       .select("player_name")
       .eq("room_code", code);
 
-    if (nameError) throw nameError;
-
-    const duplicate = (names || []).some(
-      (p) => p.player_name.toLowerCase() === name.toLowerCase()
-    );
-
-    if (duplicate) {
-      setupMessage.textContent = "Nama tersebut sudah dipakai di room ini. Gunakan nama lain.";
+    if ((existing || []).some(p => p.player_name.toLowerCase() === name.toLowerCase())) {
+      setupMessage.textContent = "Nama sudah dipakai di room ini.";
       return;
     }
 
@@ -290,42 +349,77 @@ async function joinRoom() {
     currentPlayerName = player.player_name;
     currentIsHost = false;
 
-    await enterLobby();
+    await enterRoom();
   } catch (error) {
-    setupMessage.textContent = "Gagal masuk room: " + (error.message || "Unknown error");
+    setupMessage.textContent = "Gagal masuk room: " + error.message;
   } finally {
-    setBusy(false);
+    joinRoomBtn.disabled = false;
   }
+}
+
+async function startGame() {
+  if (!currentIsHost) return;
+
+  startGameBtn.disabled = true;
+  lobbyMessage.textContent = "";
+
+  const { error } = await db
+    .from("rooms")
+    .update({
+      game_status: "playing",
+      started_at: new Date().toISOString()
+    })
+    .eq("room_code", currentRoomCode);
+
+  if (error) {
+    lobbyMessage.textContent = "Gagal memulai game: " + error.message;
+    startGameBtn.disabled = false;
+    return;
+  }
+
+  showGame();
+}
+
+async function backToLobby() {
+  if (!currentIsHost) return;
+
+  backLobbyBtn.disabled = true;
+
+  const { error } = await db
+    .from("rooms")
+    .update({ game_status: "waiting" })
+    .eq("room_code", currentRoomCode);
+
+  if (error) {
+    gameMessage.textContent = "Gagal kembali ke lobby: " + error.message;
+    backLobbyBtn.disabled = false;
+    return;
+  }
+
+  showLobby();
+  backLobbyBtn.disabled = false;
 }
 
 async function leaveRoom() {
   leaveRoomBtn.disabled = true;
-  lobbyMessage.textContent = "";
 
-  try {
-    if (currentPlayerId) {
-      const { error } = await db.from("players").delete().eq("id", currentPlayerId);
-      if (error) throw error;
-    }
-  } catch (error) {
-    lobbyMessage.textContent = "Gagal menghapus pemain: " + error.message;
-    leaveRoomBtn.disabled = false;
-    return;
+  if (currentPlayerId) {
+    await db.from("players").delete().eq("id", currentPlayerId);
   }
 
-  await unsubscribeRoom();
+  await unsubscribeRealtime();
+
   currentRoomCode = null;
   currentPlayerId = null;
   currentPlayerName = null;
   currentIsHost = false;
-  clearSession();
 
+  clearSession();
   playerNameInput.value = "";
   roomCodeInput.value = "";
-  playersList.innerHTML = "";
-  leaveRoomBtn.disabled = false;
+
   showSetup();
-  setConnection("connected", "Supabase terhubung");
+  leaveRoomBtn.disabled = false;
 }
 
 async function restoreSession() {
@@ -335,14 +429,14 @@ async function restoreSession() {
   try {
     const session = JSON.parse(raw);
 
-    const { data: player, error } = await db
+    const { data: player } = await db
       .from("players")
       .select("id, room_code, player_name, is_host")
       .eq("id", session.playerId)
       .eq("room_code", session.roomCode)
       .maybeSingle();
 
-    if (error || !player) {
+    if (!player) {
       clearSession();
       return;
     }
@@ -352,7 +446,7 @@ async function restoreSession() {
     currentPlayerName = player.player_name;
     currentIsHost = player.is_host;
 
-    await enterLobby();
+    await enterRoom();
   } catch {
     clearSession();
   }
@@ -360,7 +454,7 @@ async function restoreSession() {
 
 async function testConnection() {
   try {
-    const { error } = await db.from("rooms").select("room_code").limit(1);
+    const { error } = await db.from("rooms").select("room_code, game_status").limit(1);
     if (error) throw error;
 
     setConnection("connected", "Supabase terhubung");
@@ -368,8 +462,7 @@ async function testConnection() {
   } catch (error) {
     setConnection("error", "Supabase gagal terhubung");
     setupMessage.textContent =
-      "Koneksi database gagal. Pastikan tabel dan policy Supabase sudah dibuat. " +
-      (error.message || "");
+      "Database belum siap untuk V4. Jalankan SQL migration V4 terlebih dahulu.";
   }
 }
 
@@ -377,23 +470,18 @@ roomCodeInput.addEventListener("input", () => {
   roomCodeInput.value = normalizeRoomCode(roomCodeInput.value);
 });
 
-roomCodeInput.addEventListener("keydown", (event) => {
-  if (event.key === "Enter") joinRoom();
-});
-
 createRoomBtn.addEventListener("click", createRoom);
 joinRoomBtn.addEventListener("click", joinRoom);
+startGameBtn.addEventListener("click", startGame);
+backLobbyBtn.addEventListener("click", backToLobby);
 leaveRoomBtn.addEventListener("click", leaveRoom);
 
 copyCodeBtn.addEventListener("click", async () => {
   try {
     await navigator.clipboard.writeText(currentRoomCode);
-    const oldText = copyCodeBtn.textContent;
     copyCodeBtn.textContent = "Tersalin ✓";
-    setTimeout(() => { copyCodeBtn.textContent = oldText; }, 1200);
-  } catch {
-    lobbyMessage.textContent = "Tidak bisa menyalin otomatis. Catat kode: " + currentRoomCode;
-  }
+    setTimeout(() => copyCodeBtn.textContent = "Salin Kode", 1200);
+  } catch {}
 });
 
 testConnection();
