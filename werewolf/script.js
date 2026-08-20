@@ -11,6 +11,11 @@ const ROLE_META={
  seer:{name:"Seer / Peramal",icon:"🔮",desc:"Setiap malam cek satu pemain untuk mengetahui apakah dia Werewolf."},
  doctor:{name:"Doctor",icon:"🩺",desc:"Setiap malam lindungi satu pemain dari serangan Werewolf. Kamu boleh melindungi diri sendiri."}
 };
+
+const WW_AUDIO={night:'audio/night.mp3',morning:'audio/morning.mp3',wolf:'audio/wolf.mp3',vote:'audio/vote.mp3'};
+function playWWAudio(key){const a=$("wwNarratorAudio");if(!a||!WW_AUDIO[key])return;a.src=WW_AUDIO[key];a.play().catch(()=>{})}
+function horrorNarration(text,audio){const o=$("horrorOverlay"),t=$("horrorText");if(!o||!t)return;t.textContent=text;o.classList.remove("hidden");setTimeout(()=>o.classList.add("hidden"),2600);if(audio)playWWAudio(audio)}
+
 function esc(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;")}
 function normName(v){return v.trim().replace(/\s+/g," ").slice(0,20)}
 function normCode(v){return v.replace(/\D/g,"").slice(0,6)}
@@ -90,6 +95,9 @@ function renderVoteResult(){
  $("voteResult").textContent=room.vote_eliminated_id?`⚖️ ${pname(room.vote_eliminated_id)} mendapat suara terbanyak dan tersingkir. Role tetap rahasia.`:"🤝 Voting seri / tidak cukup suara. Tidak ada pemain yang tersingkir."
 }
 async function renderGame(){
+ if(room?.phase==="night_wolf")horrorNarration("Malam telah tiba. Werewolf mulai mencari mangsa.","wolf");
+ if(room?.phase==="day_result")horrorNarration("Matahari terbit. Warga melihat apa yang terjadi malam ini.","morning");
+ if(room?.phase==="discussion")horrorNarration("Waktu diskusi dimulai. Tentukan siapa yang mencurigakan.");
  show("gameScreen");await loadPlayers();await loadRole();renderAlive();
  $("gameRoomCode").textContent=roomCode;$("roundText").textContent=`RONDE ${room.round_no}`;$("phaseTitle").textContent=phaseLabel(room.phase);
  document.querySelectorAll(".game-panel").forEach(x=>x.classList.add("hidden"));

@@ -67,7 +67,7 @@
 <section id="gameScreen" class="game-screen hidden">
   <header class="gamebar">
     <div><strong>🐺 Werewolf</strong><span>Room <b id="gameRoomCode">------</b></span></div>
-    <button id="roleBtn">🎭 Role</button>
+    <button id="roleBtn" class="role-secret">🃏 Kartu Saya</button>
     <button id="gameMenuBtn">⋮</button>
   </header>
 
@@ -78,7 +78,9 @@
 
   <div id="aliveSummary" class="alive-summary"></div>
 
-  <section id="nightPanel" class="game-panel hidden">
+  <div id="horrorOverlay" class="horror-overlay hidden"><div id="horrorText"></div></div>
+<audio id="wwNarratorAudio" preload="auto"></audio>
+<section id="nightPanel" class="game-panel hidden">
     <div id="nightIcon" class="phase-icon">🌙</div>
     <h3 id="nightHeading">Malam tiba</h3>
     <p id="nightText">Pemain lain sedang menjalankan aksinya.</p>
