@@ -1,20 +1,15 @@
-GAME ALPI WEREWOLF V1 FOUNDATION
+Werewolf V2 Prototype
 
-Fondasi awal:
-- Mobile UI
-- Moderator Alpi
-- Fase malam
-- Diskusi
-- Voting
-- Role dasar
-- Narasi
-
-Belum:
-- Supabase realtime
-- QR room
-- Bot
-- Voice moderator
-- Animasi 3D
+Perubahan:
+- UI mobile first
+- AI moderator dasar
+- TTS browser
+- Role card tersembunyi
+- Profil dasar
 
 Tahap berikut:
-Integrasi multiplayer dan database.
+- room multiplayer
+- voting
+- animasi
+- bot
+- sistem poin lengkap

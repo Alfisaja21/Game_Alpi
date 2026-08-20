@@ -1,6 +1,40 @@
-body{margin:0;background:#08111f;color:white;font-family:Arial}
-main{max-width:430px;margin:auto;padding:16px}
-#moderator,#log{background:#14263d;padding:20px;border-radius:20px;margin:15px 0;text-align:center}
-#players{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.player{background:#203955;padding:15px;border-radius:15px;text-align:center}
-button{width:100%;padding:14px;margin:6px 0;border:0;border-radius:14px;background:#2563eb;color:white}
+body{
+margin:0;
+background:#071326;
+color:white;
+font-family:Arial;
+}
+main{
+max-width:430px;
+margin:auto;
+padding:20px;
+}
+.card{
+background:#111e35;
+border-radius:22px;
+padding:20px;
+margin:15px 0;
+}
+button,select{
+width:100%;
+padding:15px;
+margin-top:10px;
+border-radius:14px;
+border:0;
+}
+button{
+background:#3478f6;
+color:white;
+font-weight:bold;
+}
+.role{
+background:#38234d;
+padding:25px;
+font-size:28px;
+text-align:center;
+border-radius:15px;
+margin-top:15px;
+}
+.hide{
+display:none;
+}

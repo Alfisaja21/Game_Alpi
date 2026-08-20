@@ -1,19 +1,36 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Game Alpi Werewolf</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Werewolf Game Alpi</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <main>
-<h1>🌙 Game Alpi Werewolf</h1>
-<div id="moderator">🧙 Alpi Moderator<br><span id="narration">Selamat datang di Desa Alpi</span></div>
-<div id="phase">LOBBY</div>
-<div id="players"></div>
-<button id="roleBtn">👁</button>
-<button id="nextBtn">Next Phase</button>
-<div id="log"></div>
+<h1>🐺 Werewolf</h1>
+<p>AI Moderator • Party Game</p>
+
+<section class="card">
+<h2 id="title">Desa Menunggu</h2>
+<p id="story">Tekan mulai untuk memulai permainan.</p>
+<button onclick="startGame()">Mulai Game</button>
+<button onclick="showRole()">👁 Lihat Role</button>
+<div id="role" class="role hide"></div>
+</section>
+
+<section class="card">
+<h3>Pengaturan</h3>
+<select id="tts">
+<option value="on">TTS Moderator Aktif</option>
+<option value="off">TTS Mati</option>
+</select>
+</section>
+
+<section class="card">
+<h3>Profil</h3>
+<p id="profile"></p>
+</section>
+
 </main>
 <script src="script.js"></script>
 </body>

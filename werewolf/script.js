@@ -1,37 +1,29 @@
-const players=[
-{name:'Alfi',role:'Werewolf',alive:true},
-{name:'Budi',role:'Villager',alive:true},
-{name:'Rina',role:'Seer',alive:true},
-{name:'Sinta',role:'Doctor',alive:true}
-];
+let role="";
+let roles=["Villager","Villager","Seer","Doctor","Werewolf"];
 
-let phase='Malam';
+let profile=JSON.parse(localStorage.getItem("ww_profile")||'{"game":0,"win":0,"point":0}');
 
-function render(){
-document.getElementById('phase').innerText=phase;
-playersEl=document.getElementById('players');
-playersEl.innerHTML='';
-players.forEach(p=>{
-playersEl.innerHTML+=`<div class='player'>${p.name}<br>${p.alive?'🟢':'💀'}</div>`;
-});
+function speak(t){
+ document.getElementById("story").innerText=t;
+ if(document.getElementById("tts").value==="on"){
+  speechSynthesis.speak(new SpeechSynthesisUtterance(t));
+ }
 }
-render();
 
-document.getElementById('roleBtn').onclick=()=>{
-alert('Role kamu: '+players[0].role);
-};
-
-document.getElementById('nextBtn').onclick=()=>{
-if(phase==='Malam'){
-phase='Diskusi';
-narration.innerText='☀️ Pagi tiba. Warga berdiskusi.';
-}else if(phase==='Diskusi'){
-phase='Voting';
-narration.innerText='⚖️ Voting rahasia dimulai.';
-}else{
-phase='Malam';
-narration.innerText='🌙 Semua warga tidur.';
+function startGame(){
+ role=roles[Math.floor(Math.random()*roles.length)];
+ profile.game++;
+ localStorage.setItem("ww_profile",JSON.stringify(profile));
+ document.getElementById("title").innerText="Malam Pertama";
+ speak("Malam tiba. Semua warga desa tertidur. Moderator memulai permainan.");
 }
-document.getElementById('log').innerHTML+='Fase: '+phase+'<br>';
-render();
-};
+
+function showRole(){
+ let r=document.getElementById("role");
+ r.classList.remove("hide");
+ r.innerHTML="Role Kamu<br><b>"+role+"</b>";
+ setTimeout(()=>r.classList.add("hide"),5000);
+}
+
+document.getElementById("profile").innerText=
+"Game: "+profile.game+" | Menang: "+profile.win+" | Poin: "+profile.point;
