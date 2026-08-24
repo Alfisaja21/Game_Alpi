@@ -1,0 +1,12 @@
+Werewolf UI Update V4
+
+Folder dirapikan.
+
+Perubahan:
+- Semua UI update digabung ke style.css utama.
+- File CSS versi lama dihapus.
+- Mobile layout diperkecil.
+- Moon animation dan cinematic effect dipersiapkan.
+- Tidak mengubah Supabase, RPC, dan gameplay logic.
+
+Upload GitHub cukup replace seluruh folder werewolf.
