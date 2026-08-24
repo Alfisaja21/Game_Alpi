@@ -1,79 +1,59 @@
-GAME ALPI — WEREWOLF V2 NARRATOR AUDIO UPDATE
+GAME ALPI — WEREWOLF V2 NARRATOR FIX
 
-Melanjutkan Werewolf V2 Revision. Tidak ada SQL baru.
+BUG 1 — GAME START TERPOTONG
+Masalah:
+- game-start.mp3 mulai berbunyi.
+- Fungsi audio unlock lama masih memiliki Promise aktif.
+- Promise tersebut dapat selesai beberapa saat kemudian dan mem-pause elemen audio.
+- Akibatnya game-start terpotong lalu fase "Malam telah tiba" mengambil alih.
 
-11 audio narrator:
-game-start.mp3
-role-reveal.mp3
-night-start.mp3
-wolf-wake.mp3
-seer-wake.mp3
-doctor-wake.mp3
-morning-death.mp3
-discussion-start.mp3
-voting-start.mp3
-town-win.mp3
-wolf-win.mp3
+Perbaikan:
+- Tombol MULAI GAME sekarang langsung memutar game-start.mp3 sebagai user gesture.
+- Tidak ada unlockAudio() lain sebelum game-start.
+- RPC werewolf_start_game baru dijalankan SETELAH game-start selesai.
+- Jadi night-start / "Malam telah tiba" baru dapat masuk sesudah pembuka selesai.
 
-NORMALISASI
-- Target -16 LUFS
-- True peak target -1.5 dBTP
-- Mono, 44.1 kHz
-- MP3 128 kbps
+BUG 2 — ROLE REVEAL
+role-reveal.mp3 BUKAN hanya untuk Host.
 
-ALUR
-- Host menekan MULAI GAME -> game-start diputar -> setelah selesai RPC start dijalankan.
-- Kartu Role pertama kali dibuka pada match -> role-reveal diputar satu kali di HP pemain.
-- Werewolf -> night-start -> jeda 0,7 detik -> wolf-wake.
-- Seer -> seer-wake.
-- Doctor -> doctor-wake.
-- Pagi ada korban -> morning-death.
-- Diskusi -> discussion-start.
-- Voting -> voting-start.
-- Warga menang -> town-win.
-- Werewolf menang -> wolf-win.
+Desain yang benar:
+- game-start / night / Seer / Doctor / pagi / diskusi / voting / ending:
+  diputar dari HP HOST.
+- role-reveal:
+  diputar PRIVAT dari HP MASING-MASING PEMAIN saat pemain membuka Kartu Role.
 
-HOST CONTROL
-- AUDIO ON/OFF
-- TEST NARATOR
-- Volume 20%–100%
-- Test memakai night-start.mp3.
+Perbaikan:
+- showRole tidak lagi memanggil unlockAudio sebelum role-reveal.
+- Klik/tahan Kartu Role sendiri menjadi user gesture untuk memainkan audio.
+- role-reveal hanya satu kali per pemain per match.
+- Jika browser gagal memainkan audio, status tidak ditandai selesai sehingga dapat dicoba lagi.
 
-ANTI REPEAT
-- Narasi fase memakai key room + match + ronde + fase + hasil.
-- Realtime update pada fase sama tidak memutar ulang narrator.
-- Saat fase berubah, narrator sebelumnya dihentikan.
-- Winner narrator juga dilindungi dari render ulang.
+TEST NARATOR
+- Juga tidak lagi menjalankan unlock audio terpisah.
+- Tombol TEST NARATOR langsung memutar audio.
 
-AUDIO MIX
-- Ambience malam diturunkan saat narrator berbicara.
-- Setelah narrator selesai, ambience kembali.
-- Wave Moderator bergerak saat suara narrator aktif.
-
-TIMER
-Tombol aksi tidak dikunci menunggu narrator karena timer server fase tetap berjalan.
-Ini menghindari pemain kehilangan terlalu banyak waktu aksi.
-
-FILE DALAM ZIP
-werewolf/index.html
-werewolf/style.css
-werewolf/script.js
-werewolf/audio/narrator/ (11 MP3)
-readme.txt
+FILE YANG BERUBAH
+- werewolf/script.js
+- readme.txt
 
 TIDAK ADA SQL.
+TIDAK ADA AUDIO YANG PERLU DIGANTI.
+TIDAK ADA CSS/HTML YANG BERUBAH.
 
-CARA PASANG
+CARA UPDATE
 1. Ekstrak ZIP.
-2. Replace 3 file Werewolf.
-3. Upload folder werewolf/audio/narrator dengan 11 MP3.
-4. Commit GitHub.
-5. Tunggu Vercel.
-6. Hard refresh HP.
+2. Replace werewolf/script.js.
+3. Commit GitHub.
+4. Tunggu Vercel.
+5. Hard refresh semua HP.
 
 TES
-- Lobby: Test Narator, volume, Audio ON/OFF.
-- Mulai Game: game-start selesai dahulu lalu game berjalan.
-- Kartu Role: role-reveal hanya sekali per match/player.
-- Cek semua fase audio.
-- Coba update Realtime/pemain: audio fase tidak boleh berulang.
+1. Host buat room.
+2. Tekan TEST NARATOR: audio harus selesai normal.
+3. Tekan MULAI GAME:
+   game-start.mp3 harus selesai penuh.
+   baru setelah itu masuk night-start / "Malam telah tiba".
+4. Di HP Host buka Kartu Role: role-reveal terdengar.
+5. Di HP pemain non-Host buka Kartu Role: role-reveal juga harus terdengar di HP tersebut.
+6. Tutup dan buka Kartu Role lagi pada match yang sama:
+   role-reveal tidak berulang.

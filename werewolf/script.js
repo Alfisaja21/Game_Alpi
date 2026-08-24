@@ -123,22 +123,60 @@ async function playVoiceSequence(sequenceKey,voiceKeys,gapMs=650){
 }
 async function playHostPreview(){
  if(!isHost){showNightNotice("🎙️ Test narrator hanya tersedia di HP Host.");return}
- if(!soundEnabled){soundEnabled=true;localStorage.setItem(SOUND_KEY,"1");updateSoundUi()}
- stopNarrator();unlockAudio();
+ if(!soundEnabled){
+   soundEnabled=true;
+   localStorage.setItem(SOUND_KEY,"1");
+   updateSoundUi()
+ }
+
+ stopNarrator();
+
+ // Tombol TEST NARATOR sudah merupakan user gesture,
+ // jadi langsung putar audio tanpa unlockAudio() tambahan.
  const btn=$("testNarratorBtn"),box=document.querySelector(".moderator-lobby");
- btn?.classList.add("is-playing");box?.classList.add("testing");
- const runId=++voiceRunId;voiceSequenceKey="preview";
+ btn?.classList.add("is-playing");
+ box?.classList.add("testing");
+
+ const runId=++voiceRunId;
+ voiceSequenceKey="preview";
  await playNarratorClip("nightStart",runId);
- if(runId===voiceRunId){voiceSequenceKey=null;btn?.classList.remove("is-playing");box?.classList.remove("testing")}
+
+ if(runId===voiceRunId){
+   voiceSequenceKey=null;
+   audioUnlocked=true;
+   btn?.classList.remove("is-playing");
+   box?.classList.remove("testing")
+ }
 }
 function roleVoiceKey(){return`gameAlpiWerewolfRoleVoice:${roomCode||"room"}:${room?.match_no||0}:${playerId||0}`}
 function playPrivateRoleNarrator(){
  if(!soundEnabled||!WW_VOICE.roleReveal)return;
- const key=roleVoiceKey();if(localStorage.getItem(key)==="1")return;
- localStorage.setItem(key,"1");
- const a=$("wwPrivateAudio");if(!a)return;
- a.pause();a.src=WW_VOICE.roleReveal;a.volume=Math.min(.82,voiceVolume);a.currentTime=0;
- const p=a.play();if(p?.then)p.then(()=>audioUnlocked=true).catch(()=>{})
+
+ const key=roleVoiceKey();
+ if(localStorage.getItem(key)==="1")return;
+
+ const a=$("wwPrivateAudio");
+ if(!a)return;
+
+ a.pause();
+ a.src=WW_VOICE.roleReveal;
+ a.volume=Math.min(.82,voiceVolume);
+ a.currentTime=0;
+
+ const p=a.play();
+ if(p?.then){
+   p.then(()=>{
+     // Baru tandai selesai dipicu setelah browser benar-benar mengizinkan play.
+     localStorage.setItem(key,"1");
+     audioUnlocked=true
+   }).catch(()=>{
+     // Jangan set key. Kalau browser menolak, pemain dapat mencoba lagi
+     // saat membuka kartu role berikutnya.
+   })
+ }else{
+   localStorage.setItem(key,"1");
+   audioUnlocked=true
+ }
 }
 function narrationData(){
  const ph=room?.phase;
@@ -415,20 +453,42 @@ async function startGame(){
  const btn=$("startGameBtn"),oldText=btn?.textContent;
  if(btn){btn.disabled=true;btn.classList.add("narrator-starting");btn.textContent=soundEnabled?"MODERATOR MEMULAI...":"MEMULAI..."}
  try{
-   unlockAudio();lastNarrationKey=null;playedNarrationKeys.clear();roleInfo=null;
+   lastNarrationKey=null;playedNarrationKeys.clear();roleInfo=null;
+
+   // IMPORTANT:
+   // game-start diputar LANGSUNG dari klik tombol Host.
+   // Jangan panggil unlockAudio() sebelum ini karena browser dapat
+   // menyelesaikan promise unlock terlambat lalu mem-pause game-start.
    if(hostAudioOn()){
      const box=document.querySelector(".moderator-lobby");box?.classList.add("testing");
      stopNarrator();
-     const runId=++voiceRunId;voiceSequenceKey="game-start";
+
+     const runId=++voiceRunId;
+     voiceSequenceKey="game-start";
+
+     // RPC baru dijalankan SETELAH file game-start benar-benar selesai.
      await playNarratorClip("gameStart",runId);
-     if(runId===voiceRunId)voiceSequenceKey=null;
+
+     if(runId===voiceRunId){
+       voiceSequenceKey=null;
+       audioUnlocked=true
+     }
      box?.classList.remove("testing")
    }
-   const {error}=await db.rpc("werewolf_start_game",{p_room_code:roomCode,p_host_id:playerId,p_host_token:token});
+
+   const {error}=await db.rpc("werewolf_start_game",{
+     p_room_code:roomCode,
+     p_host_id:playerId,
+     p_host_token:token
+   });
    if(error)msg("lobbyMessage",friendly(error))
  }finally{
    startingGame=false;
-   if(btn){btn.classList.remove("narrator-starting");btn.textContent=oldText||"MULAI GAME";btn.disabled=players.length<5}
+   if(btn){
+     btn.classList.remove("narrator-starting");
+     btn.textContent=oldText||"MULAI GAME";
+     btn.disabled=players.length<5
+   }
  }
 }
 async function startVoting(){await db.rpc("werewolf_start_voting",{p_room_code:roomCode,p_host_id:playerId,p_host_token:token})}
@@ -440,10 +500,25 @@ async function leaveLocal(text){if(roomCh)await db.removeChannel(roomCh);if(play
 async function backLobby(){stopNarrator();playedNarrationKeys.clear();lastNarrationKey=null;roleInfo=null;const {error}=await db.rpc("werewolf_reset_lobby",{p_room_code:roomCode,p_host_id:playerId,p_host_token:token});if(error)alert(friendly(error))}
 function showRole(){
  if(!roleInfo)return;
- unlockAudio();playPrivateRoleNarrator();
- const m=ROLE_META[roleInfo.role];$("myRoleIcon").textContent=m.icon;$("myRoleName").textContent=m.name;$("myRoleDesc").textContent=m.desc;
- const names=roleInfo.wolf_names||[];$("wolfFriends").classList.toggle("hidden",roleInfo.role!=="wolf");$("wolfFriends").textContent=names.length?`🐺 Werewolf lain: ${names.join(", ")}`:"🐺 Kamu satu-satunya Werewolf.";
- hideRoleCard();openSheet("roleModal")
+
+ // role-reveal adalah audio PRIVAT.
+ // Diputar di HP pemain yang sedang membuka kartunya,
+ // termasuk non-Host. Tidak dikirim dari HP Host.
+ playPrivateRoleNarrator();
+
+ const m=ROLE_META[roleInfo.role];
+ $("myRoleIcon").textContent=m.icon;
+ $("myRoleName").textContent=m.name;
+ $("myRoleDesc").textContent=m.desc;
+
+ const names=roleInfo.wolf_names||[];
+ $("wolfFriends").classList.toggle("hidden",roleInfo.role!=="wolf");
+ $("wolfFriends").textContent=names.length
+   ?`🐺 Werewolf lain: ${names.join(", ")}`
+   :"🐺 Kamu satu-satunya Werewolf.";
+
+ hideRoleCard();
+ openSheet("roleModal")
 }
 function beginRoleReveal(e){
  e?.preventDefault();clearTimeout(roleHoldTimer);$("holdRoleBtn").classList.add("holding");
