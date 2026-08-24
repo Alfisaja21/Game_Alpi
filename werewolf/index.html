@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#080b14">
+<title>Werewolf • Game Alpi</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="forest-bg"></div>
+
+<main class="app">
+
+<section id="introScreen" class="screen">
+  <div class="moon">🌕</div>
+  <div class="topbar"><a href="../">← Game Alpi</a><span>🐺 Werewolf</span></div>
+
+  <div class="hero">
+    <p class="eyebrow">DARK FOREST • SOCIAL DEDUCTION</p>
+    <h1>Werewolf</h1>
+    <p class="lead">Desa Alpi memasuki malam gelap. Temukan Werewolf sebelum mereka menguasai desa.</p>
+    <div class="player-badge">🐺 5–20 Pemain Multiplayer</div>
+  </div>
+
+  <div class="action-area">
+    <button id="continueBtn" class="big-btn primary">CREATE ROOM</button>
+    <button class="big-btn secondary">JOIN ROOM</button>
+  </div>
+
+  <div class="role-preview">
+    <h3>Role Dalam Game</h3>
+    <div class="roles">
+      <div>🐺<span>Werewolf</span></div>
+      <div>🔮<span>Seer</span></div>
+      <div>💊<span>Doctor</span></div>
+      <div>🧑<span>Villager</span></div>
+    </div>
+  </div>
+
+  <div class="rule-list">
+    <div><span>🌙</span><p><b>Malam</b>Werewolf bergerak dan memilih target.</p></div>
+    <div><span>☀️</span><p><b>Pagi</b>Desa mengetahui hasil malam.</p></div>
+    <div><span>💬</span><p><b>Diskusi</b>Cari pemain yang mencurigakan.</p></div>
+    <div><span>🗳️</span><p><b>Voting</b>Pilih siapa yang harus keluar.</p></div>
+  </div>
+</section>
+
+<section id="setupScreen" class="screen hidden">
+<div class="topbar"><button data-back-intro>←</button><span>🐺 Werewolf</span></div>
+<div class="panel">
+<p class="eyebrow">MULTIPLAYER LOBBY</p>
+<h2>Buat atau Gabung Room</h2>
+<label>Nama pemain</label>
+<input id="playerName" maxlength="20" placeholder="Nama kamu">
+<button id="createRoomBtn" class="big-btn primary">Buat Room</button>
+<div class="or">ATAU</div>
+<label>Kode Room</label>
+<input id="roomCodeInput" maxlength="6" placeholder="Kode">
+<button id="joinRoomBtn" class="big-btn secondary">Join Room</button>
+<p id="setupMessage" class="message"></p>
+</div>
+</section>
+
+<section id="lobbyScreen" class="screen hidden">
+<div class="topbar"><a href="../">←</a><span>Forest Lobby</span></div>
+<div class="room-card">
+<p>ROOM CODE</p>
+<h1 id="roomCodeDisplay">------</h1>
+<div id="qrBox">QR JOIN</div>
+<button id="copyCodeBtn">COPY LINK</button>
+</div>
+<div id="playersList" class="players"></div>
+<button id="startGameBtn" class="big-btn primary">START GAME</button>
+</section>
+
+<section id="gameScreen" class="game-screen hidden">
+<header class="gamebar">
+<strong>🐺 Werewolf</strong>
+<button id="roleBtn" class="role-secret">🃏 Role Saya</button>
+</header>
+<section class="phase-card">
+<h2 id="phaseTitle">Malam</h2>
+<p id="phaseInstruction">Menunggu aksi pemain...</p>
+<div id="phaseTimer">30s</div>
+</section>
+</section>
+
+</main>
+<script src="script.js"></script>
+</body>
+</html>
