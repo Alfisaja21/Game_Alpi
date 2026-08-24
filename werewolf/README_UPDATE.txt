@@ -1,14 +1,15 @@
-GAME ALPI - WEREWOLF UPDATE
+GAME ALPI WEREWOLF
 
-Version:
-V7
+Current:
+- Original Supabase room logic is used.
+- Create Room uses werewolf_create_room RPC.
+- Join Room uses werewolf_join_room RPC.
+- UI updates merged into original files.
 
-Changes:
-- Cleanup update notes into single file.
-- Prepare button interaction system.
-- Prepare Create Room and Join Room hooks.
-- Improve mobile click handling.
-- Prepare next step: Supabase lobby realtime.
+Next:
+- Add lobby realtime polish.
+- Add audio assets:
+  lobby, role reveal, night, vote, win, lose.
+- Improve animations.
 
-No database migration changed.
-No Supabase schema changed.
+No database schema changed.
