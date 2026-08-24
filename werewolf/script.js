@@ -135,7 +135,9 @@ async function leaveLocal(text){if(roomCh)await db.removeChannel(roomCh);if(play
 async function backLobby(){const {error}=await db.rpc("werewolf_reset_lobby",{p_room_code:roomCode,p_host_id:playerId,p_host_token:token});if(error)alert(friendly(error))}
 function showRole(){if(!roleInfo)return;const m=ROLE_META[roleInfo.role];$("myRoleIcon").textContent=m.icon;$("myRoleName").textContent=m.name;$("myRoleDesc").textContent=m.desc;const names=roleInfo.wolf_names||[];$("wolfFriends").classList.toggle("hidden",roleInfo.role!=="wolf");$("wolfFriends").textContent=names.length?`🐺 Werewolf lain: ${names.join(", ")}`:"🐺 Kamu satu-satunya Werewolf.";openSheet("roleModal")}
 
-$("continueBtn").onclick=()=>show("setupScreen");document.querySelectorAll("[data-back-intro]").forEach(b=>b.onclick=()=>show("introScreen"));
+$("continueBtn").onclick=()=>show("setupScreen");
+$("landingJoinBtn").onclick=()=>show("setupScreen");
+document.querySelectorAll("[data-back-intro]").forEach(b=>b.onclick=()=>show("introScreen"));
 $("openRolesBtn").onclick=()=>openSheet("rolesHelpModal");$("lobbyHelpBtn").onclick=()=>openSheet("rolesHelpModal");$("menuRulesBtn").onclick=()=>{closeSheets();openSheet("rolesHelpModal")};
 document.querySelectorAll("[data-close-sheet]").forEach(b=>b.onclick=closeSheets);$("closeRoleBtn").onclick=closeSheets;
 $("createRoomBtn").onclick=createRoom;$("joinRoomBtn").onclick=joinRoom;$("roomCodeInput").oninput=()=>$("roomCodeInput").value=normCode($("roomCodeInput").value);
@@ -144,45 +146,3 @@ $("startGameBtn").onclick=startGame;$("leaveLobbyBtn").onclick=leave;$("roleBtn"
 
 (async function boot(){const raw=localStorage.getItem(STORE);if(raw){try{const x=JSON.parse(raw);roomCode=x.roomCode;playerId=x.playerId;token=x.token;playerName=x.playerName;isHost=x.isHost;if(roomCode&&playerId&&token){await enter();return}}catch{clear()}}const q=new URLSearchParams(location.search).get("room");if(q){$("roomCodeInput").value=normCode(q);show("setupScreen")}})();
 
-
-
-// ==============================
-// WEREWOLF V9 LANDING BUTTON FIX
-// ==============================
-
-document.addEventListener("DOMContentLoaded", () => {
-
-    const createLanding = document.getElementById("landingCreateBtn");
-    const joinLanding = document.getElementById("landingJoinBtn");
-
-    if (createLanding) {
-        createLanding.onclick = () => {
-            const setup = document.getElementById("setupScreen");
-            if (setup) {
-                show("setupScreen");
-            }
-
-            const nameInput = document.getElementById("playerName");
-            if (nameInput) {
-                setTimeout(() => nameInput.focus(), 200);
-            }
-        };
-    }
-
-    if (joinLanding) {
-        joinLanding.onclick = () => {
-            const join = document.getElementById("joinScreen") ||
-                         document.getElementById("setupScreen");
-
-            if (join) {
-                show(join.id);
-            }
-
-            const roomInput = document.getElementById("roomCode");
-            if (roomInput) {
-                setTimeout(() => roomInput.focus(), 200);
-            }
-        };
-    }
-
-});

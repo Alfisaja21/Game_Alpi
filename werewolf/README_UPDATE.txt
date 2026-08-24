@@ -1,11 +1,7 @@
-Game Alpi Werewolf V9
+Werewolf V10
 
-Changes:
-- Landing CREATE ROOM button connected.
-- Landing JOIN ROOM button connected.
-- Existing Supabase RPC logic preserved.
-- Removed old update note files.
-
-Next:
-- Realtime lobby polish.
-- Audio integration.
+Fix:
+- Landing CREATE ROOM opens setup.
+- Landing JOIN ROOM now has id and opens setup.
+- Existing Supabase room logic preserved.
+- No schema changes.
