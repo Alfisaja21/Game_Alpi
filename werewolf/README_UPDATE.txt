@@ -1,10 +1,14 @@
-Game Alpi Werewolf UI Update V12
-
-Structure:
-Game_Alpi-main/werewolf/
+Game Alpi Werewolf V13
 
 Changes:
-- Clean Werewolf foundation.
-- Working Create Room and Join Room buttons.
-- Toast notification instead of browser alert.
-- Ready for next Supabase room integration.
+- Connected Supabase client.
+- Added create room RPC integration.
+- Added join room RPC integration.
+- Uses existing werewolf SQL RPC:
+  werewolf_create_room
+  werewolf_join_room
+
+Next:
+- Build realtime lobby.
+- Render players from Supabase.
+- Add start game RPC.

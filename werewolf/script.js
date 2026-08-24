@@ -1,3 +1,73 @@
+
+// ===============================
+// GAME ALPI WEREWOLF V13 SUPABASE
+// ===============================
+
+const SUPABASE_URL = "https://keklkfvtbdejwqtmjzzo.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_PHOgHUCIXq8B89-tk2edVg_5enIgQaq";
+
+const supabaseDB = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
+);
+
+let wwSession = {
+    roomCode: null,
+    playerId: null,
+    token: null
+};
+
+async function createWerewolfRoom(name){
+
+    const { data, error } = await supabaseDB.rpc(
+        "werewolf_create_room",
+        {
+            p_player_name:name
+        }
+    );
+
+    if(error){
+        showToast(error.message);
+        return;
+    }
+
+    const result=data[0];
+
+    wwSession.roomCode=result.room_code;
+    wwSession.playerId=result.player_id;
+    wwSession.token=result.player_token;
+
+    showToast("Room berhasil dibuat");
+    show("lobby");
+}
+
+
+async function joinWerewolfRoom(code,name){
+
+    const { data,error } = await supabaseDB.rpc(
+        "werewolf_join_room",
+        {
+            p_room_code:code,
+            p_player_name:name
+        }
+    );
+
+    if(error){
+        showToast(error.message);
+        return;
+    }
+
+    const result=data[0];
+
+    wwSession.roomCode=result.room_code;
+    wwSession.playerId=result.player_id;
+    wwSession.token=result.player_token;
+
+    showToast("Berhasil masuk room");
+    show("lobby");
+}
+
+
 const SUPABASE_URL="https://keklkfvtbdejwqtmjzzo.supabase.co";
 const SUPABASE_KEY="YOUR_ANON_KEY";
 
