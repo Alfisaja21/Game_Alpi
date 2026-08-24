@@ -1,47 +1,87 @@
+
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Game Alpi</title>
-<link rel="stylesheet" href="css/global.css">
-<link rel="stylesheet" href="css/home.css">
+<link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
 
-<div id="app">
-<header>
+<div class="bubble b1"></div>
+<div class="bubble b2"></div>
+
+<main class="container">
+
+<header class="header">
 <div class="logo">GA</div>
 <div>
 <h2>Game Alpi</h2>
-<p>Play Together Anywhere</p>
+<p>Main bareng yuk!</p>
 </div>
 </header>
 
-<section class="hero">
+
+<section class="featured">
+
+<div class="character">🐺</div>
+
+<div class="content">
 <span>FEATURED GAME</span>
 <h1>Werewolf</h1>
-<p>Social deduction multiplayer game.</p>
-<button onclick="openGame()">PLAY NOW</button>
-</section>
+<p>
+Permainan sosial penuh rahasia.
+Temukan siapa yang menjadi serigala.
+</p>
 
-<section class="games">
-<h2>Game Collection</h2>
-<div class="cards">
-<div class="card" onclick="openGame()">
-🐺<br>Werewolf
-</div>
-<div class="card">
-🎴<br>UNO
-</div>
-<div class="card">
-🕵<br>Impostor
-</div>
-</div>
-</section>
+<button onclick="playGame()">
+🎮 MAIN SEKARANG
+</button>
+
+<div class="info">
+👥 5-20 Pemain
+<span>•</span>
+🟢 Online
 </div>
 
-<script src="js/router.js"></script>
+</div>
+
+</section>
+
+
+<h2 class="title">Game Collection</h2>
+
+
+<section class="collection">
+
+<div class="game-card">
+<div class="icon">🐺</div>
+<h3>Werewolf</h3>
+<p>Social Deduction</p>
+</div>
+
+
+<div class="game-card uno">
+<div class="icon">🎴</div>
+<h3>UNO</h3>
+<p>Card Battle</p>
+</div>
+
+
+<div class="game-card impostor">
+<div class="icon">🕵️</div>
+<h3>Impostor</h3>
+<p>Party Game</p>
+</div>
+
+</section>
+
+
+</main>
+
+
 <script src="js/app.js"></script>
 </body>
 </html>
