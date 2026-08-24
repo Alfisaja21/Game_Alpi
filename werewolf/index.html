@@ -15,7 +15,12 @@
   <div class="hero">
     <p class="eyebrow">SOCIAL DEDUCTION • 5–20 PEMAIN</p>
     <h1>Werewolf</h1>
-    <p class="lead">Desa sedang disusupi Werewolf. Cari mereka melalui informasi malam, diskusi, dan voting.</p>
+    <p class="lead">Desa sedang disusupi Werewolf. Moderator otomatis memandu malam, pagi, diskusi, dan voting dengan narasi horor.</p>
+    <div class="ww-feature-chips">
+      <span>🎙️ Moderator Otomatis</span>
+      <span>🌫️ Atmosfer Horor</span>
+      <span>🎲 Anti Role Streak</span>
+    </div>
   </div>
 
   <div class="rule-list">
@@ -65,9 +70,14 @@
     </div>
 
     <div class="auto-role">
-      <span>🎭 Role dibagi otomatis</span>
-      <small>Werewolf menyesuaikan jumlah pemain + 1 Seer + 1 Doctor + Warga.</small>
+      <span>🎭 Role dibagi otomatis • Anti streak aktif</span>
+      <small>Pemain yang baru mendapat role sama akan memiliki peluang jauh lebih kecil mendapatkannya lagi pada match berikutnya.</small>
     </div>
+    <div class="moderator-lobby">
+      <div><span>🎙️</span><p><b>Moderator Otomatis</b><small>Narasi tampil di semua HP. Audio & efek atmosfer diputar dari HP Host agar tidak tumpang tindih.</small></p></div>
+      <button id="lobbySoundBtn" type="button">🔊 AUDIO ON</button>
+    </div>
+    <button id="historyBtn" class="history-btn" type="button">🕘 Riwayat Pertandingan</button>
     <button id="startGameBtn" class="big-btn start">MULAI GAME</button>
     <p id="lobbyMessage" class="message"></p>
   </div>
@@ -76,20 +86,52 @@
 
 <section id="gameScreen" class="game-screen hidden">
   <header class="gamebar">
-    <div><strong>🐺 Werewolf</strong><span>Room <b id="gameRoomCode">------</b></span></div>
-    <button id="roleBtn" class="role-secret">🃏 Kartu Saya</button>
-    <button id="gameMenuBtn">⋮</button>
+    <div class="game-brand"><strong>🐺 Werewolf</strong><span>Room <b id="gameRoomCode">------</b></span></div>
+    <div id="connectionBadge" class="connection-badge"><i></i><span>Online</span></div>
+    <button id="soundBtn" class="sound-btn" type="button" aria-label="Suara moderator">🔊</button>
+    <button id="roleBtn" class="role-secret role-attention" type="button"><span>🃏</span><b>KARTU ROLE</b></button>
+    <button id="gameMenuBtn" type="button">⋮</button>
   </header>
+
+  <section id="villageScene" class="village-scene night" aria-hidden="true">
+    <div class="scene-sky"><i class="star s1"></i><i class="star s2"></i><i class="star s3"></i><i class="star s4"></i></div>
+    <div class="scene-moon"></div>
+    <div class="scene-mountain m1"></div><div class="scene-mountain m2"></div>
+    <div class="scene-village"><i></i><i></i><i></i><i></i><i></i></div>
+    <div class="scene-fog fog-a"></div><div class="scene-fog fog-b"></div>
+  </section>
+
+  <nav id="phaseTrail" class="phase-trail" aria-label="Fase game">
+    <span data-step="night">🌙 <b>Malam</b></span>
+    <i>›</i>
+    <span data-step="day">☀️ <b>Pagi</b></span>
+    <i>›</i>
+    <span data-step="discussion">💬 <b>Diskusi</b></span>
+    <i>›</i>
+    <span data-step="voting">🗳️ <b>Voting</b></span>
+  </nav>
 
   <section class="phase-card">
     <div><span id="roundText">RONDE 1</span><h2 id="phaseTitle">Malam</h2><p id="phaseInstruction">Menunggu...</p></div>
     <div id="phaseTimer" class="timer">30s</div>
   </section>
 
+  <section id="moderatorBox" class="moderator-box">
+    <div class="moderator-avatar">🎙️</div>
+    <div><span>MODERATOR</span><p id="moderatorText">Permainan akan dipandu secara otomatis.</p></div>
+    <div id="voiceWave" class="voice-wave" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+  </section>
+
   <div id="aliveSummary" class="alive-summary"></div>
 
-  <div id="horrorOverlay" class="horror-overlay hidden"><div id="horrorText"></div></div>
+  <div id="horrorOverlay" class="horror-overlay hidden">
+    <div class="overlay-scene-icon" id="overlaySceneIcon">🌙</div>
+    <div id="horrorText"></div>
+    <small id="horrorSubtext">Moderator</small>
+  </div>
   <audio id="wwNarratorAudio" preload="auto"></audio>
+  <audio id="wwSfxAudio" preload="auto"></audio>
+  <audio id="wwAmbienceAudio" preload="auto" loop></audio>
 
   <section id="nightPanel" class="game-panel hidden">
     <div id="nightIcon" class="phase-icon">🌙</div>
@@ -109,6 +151,7 @@
     <div class="phase-icon">💬</div>
     <h3>Diskusikan siapa Werewolf</h3>
     <p>Gunakan informasi dan perilaku pemain lain. Pemain mati hanya menonton.</p>
+    <div id="firstSpeakerCard" class="first-speaker-card hidden"><span>🎤 MULAI DARI</span><strong id="firstSpeakerName">—</strong><small>Setelah itu lanjutkan diskusi bebas.</small></div>
     <div id="discussionPlayers" class="discussion-players"></div>
     <button id="startVoteBtn" class="big-btn primary hidden">Mulai Voting Sekarang</button>
   </section>
@@ -138,6 +181,7 @@
     <h1 id="winnerTitle">Warga Menang!</h1>
     <p id="winnerText"></p>
     <div id="roleRevealList" class="role-reveal"></div>
+    <button id="finishHistoryBtn" class="history-btn" type="button">🕘 Lihat Riwayat Match</button>
     <button id="backLobbyBtn" class="big-btn primary hidden">Main Lagi</button>
     <p id="finishHint">Tunggu Host.</p>
   </div>
@@ -145,15 +189,28 @@
 
 </main>
 
-<div id="roleModal" class="sheet hidden">
-  <div class="sheet-card">
+<div id="roleModal" class="sheet hidden privacy-sheet">
+  <div class="sheet-card role-sheet-card">
     <div class="handle"></div>
     <p class="eyebrow">INFORMASI RAHASIA</p>
-    <div id="myRoleIcon" class="role-big">🎭</div>
-    <h2 id="myRoleName">Role</h2>
-    <p id="myRoleDesc"></p>
-    <div id="wolfFriends" class="wolf-friends hidden"></div>
-    <button id="closeRoleBtn" class="big-btn primary">Tutup Role</button>
+    <div id="roleFlipCard" class="role-flip-card">
+      <div class="role-card-inner">
+        <div class="role-card-face role-card-back">
+          <div class="secret-mark">GA</div>
+          <strong>ROLE RAHASIA</strong>
+          <span>Jangan biarkan pemain lain melihat.</span>
+        </div>
+        <div class="role-card-face role-card-front">
+          <div id="myRoleIcon" class="role-big">🎭</div>
+          <h2 id="myRoleName">Role</h2>
+          <p id="myRoleDesc"></p>
+          <div id="wolfFriends" class="wolf-friends hidden"></div>
+        </div>
+      </div>
+    </div>
+    <button id="holdRoleBtn" class="hold-role-btn" type="button">👁️ TAHAN UNTUK MELIHAT ROLE</button>
+    <p class="role-privacy-note">Role otomatis tertutup saat tombol dilepas.</p>
+    <button id="closeRoleBtn" class="sheet-cancel">Tutup</button>
   </div>
 </div>
 
@@ -170,10 +227,23 @@
   </div>
 </div>
 
+<div id="historyModal" class="sheet hidden">
+  <div class="sheet-card">
+    <div class="handle"></div>
+    <p class="eyebrow">RIWAYAT ROOM</p>
+    <h2>Match Sebelumnya</h2>
+    <p class="history-intro">Riwayat tersimpan selama room ini masih ada.</p>
+    <div id="matchHistoryList" class="match-history-list"><div class="history-empty">Belum ada pertandingan selesai.</div></div>
+    <button class="sheet-cancel" data-close-sheet>Tutup</button>
+  </div>
+</div>
+
 <div id="menuSheet" class="sheet hidden">
   <div class="sheet-card">
     <div class="handle"></div><h2>Menu Game</h2>
     <button id="menuRulesBtn" class="menu-row">❓ <span><b>Cara Main</b><small>Lihat kembali role dan aturan dasar.</small></span></button>
+    <button id="menuSoundBtn" class="menu-row">🔊 <span><b>Audio Moderator</b><small id="menuSoundText">Aktif di HP Host.</small></span></button>
+    <button id="menuHistoryBtn" class="menu-row">🕘 <span><b>Riwayat Match</b><small>Lihat hasil pertandingan sebelumnya di room ini.</small></span></button>
     <button id="leaveGameBtn" class="menu-row danger">🚪 <span><b>Keluar dari Game</b><small>Keluar permanen dari room ini.</small></span></button>
     <button class="sheet-cancel" data-close-sheet>Tutup</button>
   </div>
