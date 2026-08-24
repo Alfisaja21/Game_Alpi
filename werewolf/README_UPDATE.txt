@@ -1,10 +1,10 @@
-Game Alpi Werewolf V12
+Game Alpi Werewolf UI Update V12
 
-Fix:
-- Rebuilt from original source.
-- Landing button events attached after page load.
-- Removed previous experimental handlers.
-- Fixed click priority with CSS.
+Structure:
+Game_Alpi-main/werewolf/
 
-Next:
-Connect button flow to lobby and Supabase.
+Changes:
+- Clean Werewolf foundation.
+- Working Create Room and Join Room buttons.
+- Toast notification instead of browser alert.
+- Ready for next Supabase room integration.
