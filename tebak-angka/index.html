@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#07111f">
+  <title>Tebak Angka • Game Alpi</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <section class="card">
+      <a class="back-link" href="../">← Kembali ke Game Alpi</a>
+
+      <p class="eyebrow">SOLO • 1 PEMAIN</p>
+      <h1>Tebak Angka</h1>
+      <p class="subtitle">
+        Satu angka rahasia sudah dipilih dari <strong>1–100</strong>.
+        Temukan angkanya dalam maksimal 7 kesempatan.
+      </p>
+
+      <div class="stats">
+        <div class="stat">
+          <span>Sisa Kesempatan</span>
+          <strong id="attempts">7</strong>
+        </div>
+        <div class="stat">
+          <span>Menang</span>
+          <strong id="wins">0</strong>
+        </div>
+        <div class="stat">
+          <span>Rekor</span>
+          <strong id="best">-</strong>
+        </div>
+      </div>
+
+      <div class="game-box">
+        <div id="icon" class="big-icon">🤔</div>
+        <p id="message" class="message">Masukkan tebakan pertamamu.</p>
+
+        <div class="input-row">
+          <input
+            id="guessInput"
+            type="number"
+            min="1"
+            max="100"
+            inputmode="numeric"
+            placeholder="1–100"
+            aria-label="Masukkan angka 1 sampai 100"
+          >
+          <button id="guessBtn" class="primary-btn">Tebak</button>
+        </div>
+
+        <div class="range">
+          <span>1</span>
+          <div class="range-track">
+            <div id="rangeFill" class="range-fill"></div>
+          </div>
+          <span>100</span>
+        </div>
+
+        <div class="history-wrap">
+          <span class="history-label">Tebakan:</span>
+          <div id="history" class="history">
+            <span class="empty-history">Belum ada</span>
+          </div>
+        </div>
+      </div>
+
+      <button id="newGameBtn" class="secondary-btn">Acak Angka Baru</button>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
