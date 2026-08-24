@@ -478,3 +478,88 @@ body {
         min-height:44px;
     }
 }
+
+
+/* ==========================
+   WEREWOLF V5 LOBBY UI
+   ========================== */
+
+.lobby-container {
+    max-width:520px;
+    margin:auto;
+    padding:16px;
+}
+
+.room-header {
+    background:linear-gradient(145deg,#141d3d,#25183b);
+    border-radius:24px;
+    padding:20px;
+    border:1px solid rgba(255,255,255,.15);
+}
+
+.room-code {
+    font-size:28px;
+    font-weight:900;
+    letter-spacing:3px;
+    text-align:center;
+    margin:15px 0;
+}
+
+.player-grid {
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:12px;
+    margin-top:16px;
+}
+
+.player-card {
+    background:#11182f;
+    border-radius:18px;
+    padding:15px;
+    border:1px solid rgba(255,255,255,.1);
+}
+
+.player-avatar {
+    font-size:32px;
+}
+
+.host-badge {
+    background:#667cff;
+    padding:4px 10px;
+    border-radius:12px;
+    font-size:11px;
+}
+
+.role-settings {
+    margin-top:18px;
+    background:#0d1328;
+    border-radius:22px;
+    padding:18px;
+}
+
+.role-setting-item {
+    display:flex;
+    justify-content:space-between;
+    padding:10px 0;
+    color:#cbd4ef;
+}
+
+.start-game-btn {
+    width:100%;
+    margin-top:20px;
+    min-height:52px;
+    border-radius:18px;
+    background:linear-gradient(90deg,#667cff,#8eaaff);
+    color:white;
+    font-weight:900;
+}
+
+@media(max-width:700px){
+    .player-grid{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+    .room-code{
+        font-size:24px;
+    }
+}
