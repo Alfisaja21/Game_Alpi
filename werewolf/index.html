@@ -3,172 +3,90 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0a101b">
+<meta name="theme-color" content="#080b14">
 <title>Werewolf • Game Alpi</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<div class="forest-bg"></div>
+
 <main class="app">
 
 <section id="introScreen" class="screen">
+  <div class="moon">🌕</div>
   <div class="topbar"><a href="../">← Game Alpi</a><span>🐺 Werewolf</span></div>
+
   <div class="hero">
-    <p class="eyebrow">SOCIAL DEDUCTION • 5–20 PEMAIN</p>
+    <p class="eyebrow">DARK FOREST • SOCIAL DEDUCTION</p>
     <h1>Werewolf</h1>
-    <p class="lead">Desa sedang disusupi Werewolf. Cari mereka melalui informasi malam, diskusi, dan voting.</p>
+    <p class="lead">Desa Alpi memasuki malam gelap. Temukan Werewolf sebelum mereka menguasai desa.</p>
+    <div class="player-badge">🐺 5–20 Pemain Multiplayer</div>
+  </div>
+
+  <div class="action-area">
+    <button id="continueBtn" class="big-btn primary">CREATE ROOM</button>
+    <button class="big-btn secondary">JOIN ROOM</button>
+  </div>
+
+  <div class="role-preview">
+    <h3>Role Dalam Game</h3>
+    <div class="roles">
+      <div>🐺<span>Werewolf</span></div>
+      <div>🔮<span>Seer</span></div>
+      <div>💊<span>Doctor</span></div>
+      <div>🧑<span>Villager</span></div>
+    </div>
   </div>
 
   <div class="rule-list">
-    <div><span>🌙</span><p><b>Malam</b>Werewolf memilih korban. Seer mengecek satu pemain. Doctor melindungi satu pemain.</p></div>
-    <div><span>☀️</span><p><b>Pagi</b>Game mengumumkan hasil malam. Role pemain yang mati tetap rahasia.</p></div>
-    <div><span>💬</span><p><b>Diskusi</b>Pemain yang masih hidup membahas siapa yang mencurigakan.</p></div>
-    <div><span>🗳️</span><p><b>Voting</b>Pemain dengan suara terbanyak tersingkir. Seri berarti tidak ada yang tersingkir.</p></div>
+    <div><span>🌙</span><p><b>Malam</b>Werewolf bergerak dan memilih target.</p></div>
+    <div><span>☀️</span><p><b>Pagi</b>Desa mengetahui hasil malam.</p></div>
+    <div><span>💬</span><p><b>Diskusi</b>Cari pemain yang mencurigakan.</p></div>
+    <div><span>🗳️</span><p><b>Voting</b>Pilih siapa yang harus keluar.</p></div>
   </div>
-
-  <div class="win-box">
-    <div><b>👥 Warga menang</b><span>Jika semua Werewolf mati.</span></div>
-    <div><b>🐺 Werewolf menang</b><span>Jika jumlah Werewolf hidup ≥ pemain lain.</span></div>
-  </div>
-
-  <button id="openRolesBtn" class="text-btn">Lihat penjelasan role</button>
-  <button id="continueBtn" class="big-btn primary">MULAI</button>
 </section>
 
 <section id="setupScreen" class="screen hidden">
-  <div class="topbar"><button data-back-intro>←</button><span>🐺 Werewolf</span></div>
-  <div class="panel">
-    <p class="eyebrow">MULTI HP</p><h2>Buat atau gabung room</h2>
-    <label>Nama pemain</label><input id="playerName" maxlength="20" placeholder="Contoh: Alfi">
-    <button id="createRoomBtn" class="big-btn primary">＋ Buat Room</button>
-    <div class="or">ATAU</div>
-    <label>Kode room</label><input id="roomCodeInput" class="code-input" maxlength="6" inputmode="numeric" placeholder="123456">
-    <button id="joinRoomBtn" class="big-btn secondary">Gabung Room →</button>
-    <p id="setupMessage" class="message"></p>
-  </div>
+<div class="topbar"><button data-back-intro>←</button><span>🐺 Werewolf</span></div>
+<div class="panel">
+<p class="eyebrow">MULTIPLAYER LOBBY</p>
+<h2>Buat atau Gabung Room</h2>
+<label>Nama pemain</label>
+<input id="playerName" maxlength="20" placeholder="Nama kamu">
+<button id="createRoomBtn" class="big-btn primary">Buat Room</button>
+<div class="or">ATAU</div>
+<label>Kode Room</label>
+<input id="roomCodeInput" maxlength="6" placeholder="Kode">
+<button id="joinRoomBtn" class="big-btn secondary">Join Room</button>
+<p id="setupMessage" class="message"></p>
+</div>
 </section>
 
 <section id="lobbyScreen" class="screen hidden">
-  <div class="topbar"><a href="../">←</a><span>Lobby Werewolf</span><button id="lobbyHelpBtn">?</button></div>
-  <div class="room-code"><span>KODE ROOM</span><strong id="roomCodeDisplay">------</strong><button id="copyCodeBtn">Salin</button></div>
-  <div class="section-head"><div><span>PEMAIN</span><b id="playerCount">0 / 20</b></div><small>Minimal 5</small></div>
-  <div id="playersList" class="players"></div>
-
-  <div id="hostPanel" class="host-panel hidden">
-    <div class="auto-role">
-      <span>🎭 Role dibagi otomatis</span>
-      <small>Werewolf menyesuaikan jumlah pemain + 1 Seer + 1 Doctor + Warga.</small>
-    </div>
-    <button id="startGameBtn" class="big-btn start">MULAI GAME</button>
-    <p id="lobbyMessage" class="message"></p>
-  </div>
-  <button id="leaveLobbyBtn" class="leave-btn">Keluar Room</button>
+<div class="topbar"><a href="../">←</a><span>Forest Lobby</span></div>
+<div class="room-card">
+<p>ROOM CODE</p>
+<h1 id="roomCodeDisplay">------</h1>
+<div id="qrBox">QR JOIN</div>
+<button id="copyCodeBtn">COPY LINK</button>
+</div>
+<div id="playersList" class="players"></div>
+<button id="startGameBtn" class="big-btn primary">START GAME</button>
 </section>
 
 <section id="gameScreen" class="game-screen hidden">
-  <header class="gamebar">
-    <div><strong>🐺 Werewolf</strong><span>Room <b id="gameRoomCode">------</b></span></div>
-    <button id="roleBtn" class="role-secret">🃏 Kartu Saya</button>
-    <button id="gameMenuBtn">⋮</button>
-  </header>
-
-  <section class="phase-card">
-    <div><span id="roundText">RONDE 1</span><h2 id="phaseTitle">Malam</h2><p id="phaseInstruction">Menunggu...</p></div>
-    <div id="phaseTimer" class="timer">30s</div>
-  </section>
-
-  <div id="aliveSummary" class="alive-summary"></div>
-
-  <div id="horrorOverlay" class="horror-overlay hidden"><div id="horrorText"></div></div>
-<audio id="wwNarratorAudio" preload="auto"></audio>
-<section id="nightPanel" class="game-panel hidden">
-    <div id="nightIcon" class="phase-icon">🌙</div>
-    <h3 id="nightHeading">Malam tiba</h3>
-    <p id="nightText">Pemain lain sedang menjalankan aksinya.</p>
-    <div id="nightTargets" class="target-list"></div>
-    <div id="seerResult" class="seer-result hidden"></div>
-  </section>
-
-  <section id="dayResultPanel" class="game-panel hidden">
-    <div class="phase-icon">☀️</div>
-    <h3>Pagi tiba</h3>
-    <div id="dayResult" class="result-message"></div>
-  </section>
-
-  <section id="discussionPanel" class="game-panel hidden">
-    <div class="phase-icon">💬</div>
-    <h3>Diskusikan siapa Werewolf</h3>
-    <p>Gunakan informasi dan perilaku pemain lain. Pemain mati hanya menonton.</p>
-    <div id="discussionPlayers" class="discussion-players"></div>
-    <button id="startVoteBtn" class="big-btn primary hidden">Mulai Voting Sekarang</button>
-  </section>
-
-  <section id="votingPanel" class="game-panel hidden">
-    <div class="phase-icon">🗳️</div>
-    <h3>Pilih pemain yang mencurigakan</h3>
-    <p id="voteHint">Satu suara per pemain hidup.</p>
-    <div id="voteTargets" class="target-list"></div>
-  </section>
-
-  <section id="voteResultPanel" class="game-panel hidden">
-    <div class="phase-icon">⚖️</div>
-    <h3>Hasil voting</h3>
-    <div id="voteResult" class="result-message"></div>
-  </section>
-
-  <section id="deadPanel" class="spectator hidden">
-    👻 Kamu sudah tersingkir. Kamu tetap bisa menonton jalannya permainan, tetapi tidak bisa melakukan aksi atau voting.
-  </section>
+<header class="gamebar">
+<strong>🐺 Werewolf</strong>
+<button id="roleBtn" class="role-secret">🃏 Role Saya</button>
+</header>
+<section class="phase-card">
+<h2 id="phaseTitle">Malam</h2>
+<p id="phaseInstruction">Menunggu aksi pemain...</p>
+<div id="phaseTimer">30s</div>
 </section>
-
-<section id="finishScreen" class="screen hidden">
-  <div class="finish-card">
-    <div id="finishIcon" class="finish-icon">🏆</div>
-    <p class="eyebrow">GAME SELESAI</p>
-    <h1 id="winnerTitle">Warga Menang!</h1>
-    <p id="winnerText"></p>
-    <div id="roleRevealList" class="role-reveal"></div>
-    <button id="backLobbyBtn" class="big-btn primary hidden">Main Lagi</button>
-    <p id="finishHint">Tunggu Host.</p>
-  </div>
 </section>
 
 </main>
-
-<div id="roleModal" class="sheet hidden">
-  <div class="sheet-card">
-    <div class="handle"></div>
-    <p class="eyebrow">INFORMASI RAHASIA</p>
-    <div id="myRoleIcon" class="role-big">🎭</div>
-    <h2 id="myRoleName">Role</h2>
-    <p id="myRoleDesc"></p>
-    <div id="wolfFriends" class="wolf-friends hidden"></div>
-    <button id="closeRoleBtn" class="big-btn primary">Tutup Role</button>
-  </div>
-</div>
-
-<div id="rolesHelpModal" class="sheet hidden">
-  <div class="sheet-card">
-    <div class="handle"></div><h2>Role Dasar</h2>
-    <div class="role-help">
-      <div><span>🐺</span><p><b>Werewolf</b>Pilih korban setiap malam. Werewolf mengetahui anggota Werewolf lain.</p></div>
-      <div><span>👨‍🌾</span><p><b>Warga</b>Tidak punya aksi malam. Cari Werewolf lewat diskusi dan voting.</p></div>
-      <div><span>🔮</span><p><b>Seer / Peramal</b>Setiap malam cek satu pemain untuk mengetahui apakah dia Werewolf.</p></div>
-      <div><span>🩺</span><p><b>Doctor</b>Setiap malam lindungi satu pemain dari serangan Werewolf. Boleh melindungi diri sendiri.</p></div>
-    </div>
-    <button class="big-btn primary" data-close-sheet>Mengerti</button>
-  </div>
-</div>
-
-<div id="menuSheet" class="sheet hidden">
-  <div class="sheet-card">
-    <div class="handle"></div><h2>Menu Game</h2>
-    <button id="menuRulesBtn" class="menu-row">❓ <span><b>Cara Main</b><small>Lihat kembali role dan aturan dasar.</small></span></button>
-    <button id="leaveGameBtn" class="menu-row danger">🚪 <span><b>Keluar dari Game</b><small>Keluar permanen dari room ini.</small></span></button>
-    <button class="sheet-cancel" data-close-sheet>Tutup</button>
-  </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="script.js"></script>
 </body>
 </html>
