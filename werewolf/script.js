@@ -1,11 +1,13 @@
 const SUPABASE_URL="https://keklkfvtbdejwqtmjzzo.supabase.co";
 const SUPABASE_KEY="sb_publishable_PHOgHUCIXq8B89-tk2edVg_5enIgQaq";
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-const $=id=>document.getElementById(id), STORE="gameAlpiWerewolfV1", SOUND_KEY="gameAlpiWerewolfSound";
+const $=id=>document.getElementById(id), STORE="gameAlpiWerewolfV1", SOUND_KEY="gameAlpiWerewolfSound", VOICE_VOLUME_KEY="gameAlpiWerewolfVoiceVolume";
 let roomCode=null,playerId=null,token=null,playerName=null,isHost=false,room=null,players=[],roleInfo=null;
 let roomCh=null,playerCh=null,timer=null,actionBusy=false,timeoutBusy=false;
 let wwBotTokens=new Map(),wwBotTimer=null,wwBotBusy=false;
 let soundEnabled=localStorage.getItem(SOUND_KEY)!=="0",lastNarrationKey=null,roleHoldTimer=null,roleRevealed=false,audioUnlocked=false;
+let voiceVolume=Math.max(.2,Math.min(1,Number(localStorage.getItem(VOICE_VOLUME_KEY)||.85)));
+let voiceRunId=0,voiceSequenceKey=null,playedNarrationKeys=new Set(),startingGame=false;
 
 const ROLE_META={
  wolf:{name:"Werewolf",icon:"🐺",desc:"Pilih korban setiap malam dan menyamar saat diskusi. Werewolf mengetahui anggota Werewolf lain."},
@@ -29,26 +31,57 @@ const WW_SFX={
  The game will use them automatically when present.
 */
 const WW_VOICE={
- night_wolf:"audio/narrator/night-wolf.mp3",
- night_seer:"audio/narrator/night-seer.mp3",
- night_doctor:"audio/narrator/night-doctor.mp3",
- day_result:"audio/narrator/morning.mp3",
- discussion:"audio/narrator/discussion.mp3",
- voting:"audio/narrator/voting.mp3",
- vote_result:"audio/narrator/vote-result.mp3",
- town_win:"audio/narrator/town-win.mp3",
- wolf_win:"audio/narrator/wolf-win.mp3"
+ gameStart:"audio/narrator/game-start.mp3",
+ roleReveal:"audio/narrator/role-reveal.mp3",
+ nightStart:"audio/narrator/night-start.mp3",
+ wolfWake:"audio/narrator/wolf-wake.mp3",
+ seerWake:"audio/narrator/seer-wake.mp3",
+ doctorWake:"audio/narrator/doctor-wake.mp3",
+ morningDeath:"audio/narrator/morning-death.mp3",
+ discussionStart:"audio/narrator/discussion-start.mp3",
+ votingStart:"audio/narrator/voting-start.mp3",
+ townWin:"audio/narrator/town-win.mp3",
+ wolfWin:"audio/narrator/wolf-win.mp3"
 };
 
 function hostAudioOn(){return !!isHost&&soundEnabled}
-function unlockAudio(){
- if(audioUnlocked||!isHost||!soundEnabled)return;
- const a=$("wwSfxAudio");if(!a)return;
- const oldVol=a.volume;a.src=WW_SFX.role;a.volume=0;
- const promise=a.play();
- if(promise?.then)promise.then(()=>{a.pause();a.currentTime=0;a.volume=oldVol||.75;audioUnlocked=true}).catch(()=>{a.volume=oldVol||.75});
+function clampVoiceVolume(v){return Math.max(.2,Math.min(1,Number(v)||.85))}
+function applyVoiceVolume(){
+ voiceVolume=clampVoiceVolume(voiceVolume);
+ const a=$("wwNarratorAudio"),p=$("wwPrivateAudio");
+ if(a)a.volume=voiceVolume;
+ if(p)p.volume=Math.min(.82,voiceVolume);
+ if($("narratorVolume"))$("narratorVolume").value=String(Math.round(voiceVolume*100));
+ if($("narratorVolumeText"))$("narratorVolumeText").textContent=`${Math.round(voiceVolume*100)}%`
 }
-function setWave(on){$("voiceWave")?.classList.toggle("active",!!on)}
+function setVoiceVolume(percent){
+ voiceVolume=clampVoiceVolume(Number(percent)/100);
+ localStorage.setItem(VOICE_VOLUME_KEY,String(voiceVolume));
+ applyVoiceVolume();updateSoundUi()
+}
+function unlockAudio(){
+ if(audioUnlocked||!soundEnabled)return;
+ const a=isHost?$("wwNarratorAudio"):$("wwPrivateAudio");if(!a)return;
+ const src=isHost?WW_VOICE.nightStart:WW_VOICE.roleReveal;
+ const oldVol=a.volume;a.src=src;a.volume=0;
+ const promise=a.play();
+ if(promise?.then)promise.then(()=>{a.pause();a.currentTime=0;a.volume=oldVol||voiceVolume;audioUnlocked=true}).catch(()=>{a.volume=oldVol||voiceVolume})
+}
+function setWave(on){
+ $("voiceWave")?.classList.toggle("active",!!on);
+ $("moderatorBox")?.classList.toggle("speaking",!!on)
+}
+function duckAmbience(on){
+ const a=$("wwAmbienceAudio");if(!a||a.paused)return;
+ a.volume=on?.07:.18
+}
+function stopNarrator(){
+ voiceRunId++;voiceSequenceKey=null;
+ const a=$("wwNarratorAudio");if(a){a.pause();a.currentTime=0;a.onended=null;a.onerror=null;a.onabort=null;a.onplay=null}
+ setWave(false);duckAmbience(false);
+ document.querySelector(".moderator-lobby")?.classList.remove("testing");
+ $("testNarratorBtn")?.classList.remove("is-playing")
+}
 function playSfx(key,volume=.75,hostOnly=true){
  const src=WW_SFX[key],a=$("wwSfxAudio");
  if((hostOnly&&!hostAudioOn())||(!hostOnly&&!soundEnabled)||!src||!a)return;
@@ -58,56 +91,97 @@ function setNightAmbience(on){
  const a=$("wwAmbienceAudio");if(!a)return;
  if(on&&hostAudioOn()){
    if(!a.src||!a.src.includes("ambience-night.mp3"))a.src=WW_SFX.night;
-   a.volume=.20;a.play().catch(()=>{})
+   a.volume=.18;a.play().catch(()=>{})
  }else{a.pause();a.currentTime=0}
 }
-function playHumanNarrator(phase){
- if(!hostAudioOn()||!WW_VOICE[phase])return false;
- const a=$("wwNarratorAudio");if(!a)return false;
- a.pause();a.src=WW_VOICE[phase];a.volume=.88;a.currentTime=0;
- a.onplay=()=>setWave(true);a.onended=()=>setWave(false);a.onerror=()=>setWave(false);
- a.play().catch(()=>setWave(false));
+function playNarratorClip(voiceKey,runId=voiceRunId){
+ return new Promise(resolve=>{
+   const src=WW_VOICE[voiceKey],a=$("wwNarratorAudio");
+   if(!hostAudioOn()||!src||!a||runId!==voiceRunId){resolve(false);return}
+   a.pause();a.src=src;a.volume=voiceVolume;a.currentTime=0;
+   let done=false;
+   const finish=ok=>{if(done)return;done=true;a.onended=null;a.onerror=null;a.onabort=null;if(runId===voiceRunId){setWave(false);duckAmbience(false)}resolve(ok)};
+   a.onplay=()=>{if(runId===voiceRunId){audioUnlocked=true;setWave(true);duckAmbience(true)}};
+   a.onended=()=>finish(true);a.onerror=()=>finish(false);a.onabort=()=>finish(false);
+   const p=a.play();if(p?.catch)p.catch(()=>finish(false))
+ })
+}
+function waitVoice(ms,runId){return new Promise(resolve=>setTimeout(()=>resolve(runId===voiceRunId),ms))}
+async function playVoiceSequence(sequenceKey,voiceKeys,gapMs=650){
+ if(!hostAudioOn()||!voiceKeys?.length)return false;
+ if(playedNarrationKeys.has(sequenceKey)||voiceSequenceKey===sequenceKey)return false;
+ playedNarrationKeys.add(sequenceKey);
+ stopNarrator();
+ const runId=++voiceRunId;voiceSequenceKey=sequenceKey;
+ for(let i=0;i<voiceKeys.length;i++){
+   if(runId!==voiceRunId)break;
+   await playNarratorClip(voiceKeys[i],runId);
+   if(i<voiceKeys.length-1&&runId===voiceRunId)await waitVoice(gapMs,runId)
+ }
+ if(runId===voiceRunId){voiceSequenceKey=null;setWave(false);duckAmbience(false)}
  return true
+}
+async function playHostPreview(){
+ if(!isHost){showNightNotice("🎙️ Test narrator hanya tersedia di HP Host.");return}
+ if(!soundEnabled){soundEnabled=true;localStorage.setItem(SOUND_KEY,"1");updateSoundUi()}
+ stopNarrator();unlockAudio();
+ const btn=$("testNarratorBtn"),box=document.querySelector(".moderator-lobby");
+ btn?.classList.add("is-playing");box?.classList.add("testing");
+ const runId=++voiceRunId;voiceSequenceKey="preview";
+ await playNarratorClip("nightStart",runId);
+ if(runId===voiceRunId){voiceSequenceKey=null;btn?.classList.remove("is-playing");box?.classList.remove("testing")}
+}
+function roleVoiceKey(){return`gameAlpiWerewolfRoleVoice:${roomCode||"room"}:${room?.match_no||0}:${playerId||0}`}
+function playPrivateRoleNarrator(){
+ if(!soundEnabled||!WW_VOICE.roleReveal)return;
+ const key=roleVoiceKey();if(localStorage.getItem(key)==="1")return;
+ localStorage.setItem(key,"1");
+ const a=$("wwPrivateAudio");if(!a)return;
+ a.pause();a.src=WW_VOICE.roleReveal;a.volume=Math.min(.82,voiceVolume);a.currentTime=0;
+ const p=a.play();if(p?.then)p.then(()=>audioUnlocked=true).catch(()=>{})
 }
 function narrationData(){
  const ph=room?.phase;
- if(ph==="night_wolf")return{icon:"🌙",text:"Malam telah tiba. Semua warga menutup mata. Werewolf, bangun dan pilih mangsamu.",sfx:"howl",voice:"night_wolf"};
- if(ph==="night_seer")return{icon:"🔮",text:"Werewolf kembali tidur. Seer, buka mata dan periksa satu pemain.",voice:"night_seer"};
- if(ph==="night_doctor")return{icon:"🩺",text:"Seer kembali tidur. Doctor, pilih satu orang untuk dilindungi malam ini.",voice:"night_doctor"};
- if(ph==="day_result"&&room?.day_victim_id)return{icon:"☀️",text:`Pagi telah datang. ${pname(room.day_victim_id)} tidak selamat dari malam yang panjang.`,sfx:"death",voice:"day_result"};
- if(ph==="day_result")return{icon:"☀️",text:"Matahari terbit. Malam ini tidak ada warga yang tersingkir.",sfx:"morning",voice:"day_result"};
+ if(ph==="night_wolf")return{icon:"🌙",text:"Malam telah tiba. Semua warga menutup mata. Werewolf, bangun dan pilih mangsamu.",sfx:"howl",voices:["nightStart","wolfWake"]};
+ if(ph==="night_seer")return{icon:"🔮",text:"Werewolf kembali tidur. Seer, buka mata dan periksa satu pemain.",voices:["seerWake"]};
+ if(ph==="night_doctor")return{icon:"🩺",text:"Seer kembali tidur. Doctor, pilih satu orang untuk dilindungi malam ini.",voices:["doctorWake"]};
+ if(ph==="day_result"&&room?.day_victim_id)return{icon:"☀️",text:`Pagi telah datang. ${pname(room.day_victim_id)} tidak selamat dari malam yang panjang.`,sfx:"death",voices:["morningDeath"]};
+ if(ph==="day_result")return{icon:"☀️",text:"Matahari terbit. Malam ini tidak ada warga yang tersingkir.",sfx:"morning",voices:[]};
  if(ph==="discussion"){
    const starter=room?.discussion_speaker_id?pname(room.discussion_speaker_id):null;
-   return{icon:"💬",text:starter?`Waktu diskusi dimulai. ${starter}, mulai sampaikan kecurigaanmu terlebih dahulu.`:"Waktu diskusi dimulai. Cari siapa yang paling mencurigakan.",voice:"discussion"}
+   return{icon:"💬",text:starter?`Waktu diskusi dimulai. ${starter}, mulai sampaikan kecurigaanmu terlebih dahulu.`:"Waktu diskusi dimulai. Cari siapa yang paling mencurigakan.",voices:["discussionStart"]}
  }
- if(ph==="voting")return{icon:"🗳️",text:"Diskusi selesai. Sekarang tentukan pilihanmu. Satu suara dapat mengubah nasib desa.",sfx:"vote",voice:"voting"};
- if(ph==="vote_result"&&room?.vote_eliminated_id)return{icon:"⚖️",text:`Keputusan telah dibuat. ${pname(room.vote_eliminated_id)} harus meninggalkan desa.`,sfx:"death",voice:"vote_result"};
- if(ph==="vote_result")return{icon:"⚖️",text:"Suara warga berakhir seri. Tidak ada seorang pun yang meninggalkan desa.",voice:"vote_result"};
+ if(ph==="voting")return{icon:"🗳️",text:"Diskusi selesai. Sekarang tentukan pilihanmu. Satu suara dapat mengubah nasib desa.",sfx:"vote",voices:["votingStart"]};
+ if(ph==="vote_result"&&room?.vote_eliminated_id)return{icon:"⚖️",text:`Keputusan telah dibuat. ${pname(room.vote_eliminated_id)} harus meninggalkan desa.`,sfx:"death",voices:[]};
+ if(ph==="vote_result")return{icon:"⚖️",text:"Suara warga berakhir seri. Tidak ada seorang pun yang meninggalkan desa.",voices:[]};
  return null
 }
 function horrorNarration(force=false){
  const data=narrationData();if(!data)return;
- const key=`${roomCode||""}:${room?.match_no||0}:${room?.round_no||0}:${room?.phase}:${room?.day_victim_id||0}:${room?.vote_eliminated_id||0}`;
- if(!force&&lastNarrationKey===key)return;lastNarrationKey=key;
+ const key=`phase:${roomCode||""}:${room?.match_no||0}:${room?.round_no||0}:${room?.phase}:${room?.day_victim_id||0}:${room?.vote_eliminated_id||0}`;
+ if(!force&&lastNarrationKey===key)return;
+ lastNarrationKey=key;
  $("moderatorText").textContent=data.text;
  const o=$("horrorOverlay"),t=$("horrorText");if(o&&t){
    $("overlaySceneIcon").textContent=data.icon;t.textContent=data.text;
-   $("horrorSubtext").textContent=isHost&&soundEnabled?"Moderator • Audio Host":"Moderator • Narasi teks";
-   o.classList.remove("hidden");clearTimeout(o._hideTimer);o._hideTimer=setTimeout(()=>o.classList.add("hidden"),2900)
+   $("horrorSubtext").textContent=isHost&&soundEnabled?"Moderator • Suara Host":"Moderator • Narasi teks";
+   o.classList.remove("hidden");clearTimeout(o._hideTimer);o._hideTimer=setTimeout(()=>o.classList.add("hidden"),3000)
  }
- if(data.sfx)playSfx(data.sfx,data.sfx==="howl"?.58:.72);
- playHumanNarrator(data.voice);
+ if(data.sfx)playSfx(data.sfx,data.sfx==="howl"?.52:.66);
+ if(data.voices?.length)playVoiceSequence(key,data.voices,700)
 }
 function updateSoundUi(){
  const label=soundEnabled?"🔊":"🔇";
- if($("soundBtn")){$("soundBtn").textContent=isHost?label:"🎙️";$("soundBtn").classList.toggle("muted",!soundEnabled);$("soundBtn").title=isHost?(soundEnabled?"Matikan audio moderator":"Aktifkan audio moderator"):"Audio moderator diputar dari HP Host"}
+ if($("soundBtn")){$("soundBtn").textContent=isHost?label:"🎙️";$("soundBtn").classList.toggle("muted",!soundEnabled);$("soundBtn").title=isHost?(soundEnabled?"Matikan audio moderator":"Aktifkan audio moderator"):"Audio moderator utama diputar dari HP Host"}
  if($("lobbySoundBtn")){$("lobbySoundBtn").textContent=soundEnabled?"🔊 AUDIO ON":"🔇 AUDIO OFF";$("lobbySoundBtn").classList.toggle("off",!soundEnabled)}
- if($("menuSoundText"))$("menuSoundText").textContent=isHost?(soundEnabled?"Aktif di HP Host.":"Audio moderator dimatikan."):"Audio moderator diputar dari HP Host.";
+ if($("menuSoundText"))$("menuSoundText").textContent=isHost?(soundEnabled?`Aktif • volume ${Math.round(voiceVolume*100)}%.`:"Audio moderator dimatikan."):"Audio moderator utama diputar dari HP Host.";
+ applyVoiceVolume()
 }
 function toggleSound(){
- if(!isHost){showNightNotice("🎙️ Audio moderator diputar dari HP Host.");return}
- soundEnabled=!soundEnabled;localStorage.setItem(SOUND_KEY,soundEnabled?"1":"0");updateSoundUi();if(soundEnabled)unlockAudio();
- if(!soundEnabled){$("wwNarratorAudio")?.pause();$("wwSfxAudio")?.pause();setNightAmbience(false);setWave(false)}
+ if(!isHost){showNightNotice("🎙️ Audio moderator utama diputar dari HP Host.");return}
+ soundEnabled=!soundEnabled;localStorage.setItem(SOUND_KEY,soundEnabled?"1":"0");updateSoundUi();
+ if(soundEnabled)unlockAudio();
+ if(!soundEnabled){stopNarrator();$("wwSfxAudio")?.pause();setNightAmbience(false)}
  else if(room?.phase?.startsWith("night_"))setNightAmbience(true)
 }
 
@@ -315,8 +389,14 @@ async function renderFinish(){
  $("roleRevealList").innerHTML=(data||[]).map(x=>`<div class="reveal-row"><span>${esc(x.player_name)}</span><b>${ROLE_META[x.role]?.icon||""} ${ROLE_META[x.role]?.name||x.role}</b></div>`).join("");
  $("backLobbyBtn").classList.toggle("hidden",!isHost);$("finishHint").classList.toggle("hidden",isHost);
  $("moderatorText")&&($("moderatorText").textContent=town?"Desa berhasil mengalahkan Werewolf.":"Werewolf telah menguasai desa.");
- const finishVoice=town?"town_win":"wolf_win";
- if(hostAudioOn()){playSfx(town?"morning":"howl",.65);playHumanNarrator(finishVoice)}
+ const finishKey=`finish:${roomCode||""}:${room?.match_no||0}:${room?.winner||""}`;
+ if(lastNarrationKey!==finishKey){
+   lastNarrationKey=finishKey;
+   if(hostAudioOn()){
+     playSfx(town?"morning":"howl",.58);
+     playVoiceSequence(finishKey,[town?"townWin":"wolfWin"],500)
+   }
+ }
 }
 async function route(){if(!room)return;if(room.phase==="lobby"){show("lobbyScreen");await loadPlayers();renderLobby()}else if(room.phase==="finished")await renderFinish();else await renderGame()}
 
@@ -330,16 +410,37 @@ async function enter(){save();await loadRoom();if(!room){leaveLocal("Room tidak 
 async function createRoom(){const n=normName($("playerName").value);if(!n){msg("setupMessage","Masukkan nama.");return}const {data,error}=await db.rpc("werewolf_create_room",{p_player_name:n});if(error){msg("setupMessage",friendly(error));return}const r=data[0];roomCode=r.room_code;playerId=r.player_id;token=r.player_token;playerName=n;isHost=true;await enter()}
 async function joinRoom(){const n=normName($("playerName").value),c=normCode($("roomCodeInput").value);if(!n||c.length!==6){msg("setupMessage","Isi nama dan kode room 6 angka.");return}const {data,error}=await db.rpc("werewolf_join_room",{p_room_code:c,p_player_name:n});if(error){msg("setupMessage",friendly(error));return}const r=data[0];roomCode=r.room_code;playerId=r.player_id;token=r.player_token;playerName=n;isHost=false;await enter()}
 async function kick(id){const {error}=await db.rpc("werewolf_kick_player",{p_room_code:roomCode,p_host_id:playerId,p_host_token:token,p_target_id:id});if(error)msg("lobbyMessage",friendly(error))}
-async function startGame(){unlockAudio();lastNarrationKey=null;roleInfo=null;const {error}=await db.rpc("werewolf_start_game",{p_room_code:roomCode,p_host_id:playerId,p_host_token:token});if(error)msg("lobbyMessage",friendly(error))}
+async function startGame(){
+ if(startingGame)return;startingGame=true;
+ const btn=$("startGameBtn"),oldText=btn?.textContent;
+ if(btn){btn.disabled=true;btn.classList.add("narrator-starting");btn.textContent=soundEnabled?"MODERATOR MEMULAI...":"MEMULAI..."}
+ try{
+   unlockAudio();lastNarrationKey=null;playedNarrationKeys.clear();roleInfo=null;
+   if(hostAudioOn()){
+     const box=document.querySelector(".moderator-lobby");box?.classList.add("testing");
+     stopNarrator();
+     const runId=++voiceRunId;voiceSequenceKey="game-start";
+     await playNarratorClip("gameStart",runId);
+     if(runId===voiceRunId)voiceSequenceKey=null;
+     box?.classList.remove("testing")
+   }
+   const {error}=await db.rpc("werewolf_start_game",{p_room_code:roomCode,p_host_id:playerId,p_host_token:token});
+   if(error)msg("lobbyMessage",friendly(error))
+ }finally{
+   startingGame=false;
+   if(btn){btn.classList.remove("narrator-starting");btn.textContent=oldText||"MULAI GAME";btn.disabled=players.length<5}
+ }
+}
 async function startVoting(){await db.rpc("werewolf_start_voting",{p_room_code:roomCode,p_host_id:playerId,p_host_token:token})}
 async function submitVote(id){if(actionBusy)return;actionBusy=true;const {error}=await db.rpc("werewolf_vote",{p_player_id:playerId,p_player_token:token,p_target_id:id});if(error)alert(friendly(error));else document.querySelectorAll("[data-target]").forEach(b=>{b.disabled=true;b.classList.toggle("selected",Number(b.dataset.target)===id)});actionBusy=false}
 async function timeoutPhase(){if(timeoutBusy)return;timeoutBusy=true;await db.rpc("werewolf_timeout_phase",{p_room_code:roomCode});setTimeout(()=>timeoutBusy=false,800)}
 function startTimer(){if(timer)clearInterval(timer);const tick=async()=>{if(!room?.phase_started_at||!room?.phase_seconds){$("phaseTimer").textContent="∞";return}const end=new Date(room.phase_started_at).getTime()+room.phase_seconds*1000,left=Math.max(0,Math.ceil((end-Date.now())/1000));$("phaseTimer").textContent=`${left}s`;$("phaseTimer").classList.toggle("warn",left<=10);$("phaseTimer").classList.toggle("danger",left<=5);if(left<=0)await timeoutPhase()};tick();timer=setInterval(tick,500)}
 async function leave(){const {error}=await db.rpc("werewolf_leave_room",{p_player_id:playerId,p_player_token:token});if(error)alert(friendly(error));else leaveLocal("")}
-async function leaveLocal(text){if(roomCh)await db.removeChannel(roomCh);if(playerCh)await db.removeChannel(playerCh);setNightAmbience(false);$("wwNarratorAudio")?.pause();$("wwSfxAudio")?.pause();clear();roomCode=playerId=token=playerName=null;room=null;players=[];roleInfo=null;lastNarrationKey=null;show("setupScreen");msg("setupMessage",text)}
-async function backLobby(){lastNarrationKey=null;roleInfo=null;const {error}=await db.rpc("werewolf_reset_lobby",{p_room_code:roomCode,p_host_id:playerId,p_host_token:token});if(error)alert(friendly(error))}
+async function leaveLocal(text){if(roomCh)await db.removeChannel(roomCh);if(playerCh)await db.removeChannel(playerCh);setNightAmbience(false);stopNarrator();$("wwPrivateAudio")?.pause();$("wwSfxAudio")?.pause();clear();roomCode=playerId=token=playerName=null;room=null;players=[];roleInfo=null;lastNarrationKey=null;show("setupScreen");msg("setupMessage",text)}
+async function backLobby(){stopNarrator();playedNarrationKeys.clear();lastNarrationKey=null;roleInfo=null;const {error}=await db.rpc("werewolf_reset_lobby",{p_room_code:roomCode,p_host_id:playerId,p_host_token:token});if(error)alert(friendly(error))}
 function showRole(){
  if(!roleInfo)return;
+ unlockAudio();playPrivateRoleNarrator();
  const m=ROLE_META[roleInfo.role];$("myRoleIcon").textContent=m.icon;$("myRoleName").textContent=m.name;$("myRoleDesc").textContent=m.desc;
  const names=roleInfo.wolf_names||[];$("wolfFriends").classList.toggle("hidden",roleInfo.role!=="wolf");$("wolfFriends").textContent=names.length?`🐺 Werewolf lain: ${names.join(", ")}`:"🐺 Kamu satu-satunya Werewolf.";
  hideRoleCard();openSheet("roleModal")
@@ -377,8 +478,10 @@ $("copyCodeBtn").onclick=async()=>{try{await navigator.clipboard.writeText(roomC
 $("wwAddBotBtn").onclick=()=>addWwBots(1);$("wwAdd5BotBtn").onclick=()=>addWwBots(5);$("wwRemoveBotsBtn").onclick=removeWwBots;$("wwBotSpeed").onchange=e=>localStorage.setItem("gameAlpiWwBotSpeed",e.target.value);if(localStorage.getItem("gameAlpiWwBotSpeed"))$("wwBotSpeed").value=localStorage.getItem("gameAlpiWwBotSpeed");
 $("startGameBtn").onclick=startGame;$("leaveLobbyBtn").onclick=leave;$("roleBtn").onclick=showRole;$("gameMenuBtn").onclick=()=>openSheet("menuSheet");$("leaveGameBtn").onclick=()=>{if(confirm("Benar-benar keluar dari Werewolf?"))leave()};$("backLobbyBtn").onclick=backLobby;
 $("soundBtn").onclick=toggleSound;$("lobbySoundBtn").onclick=toggleSound;$("menuSoundBtn").onclick=toggleSound;
+$("testNarratorBtn").onclick=playHostPreview;
+$("narratorVolume").oninput=e=>setVoiceVolume(e.target.value);
 $("historyBtn").onclick=openHistory;$("finishHistoryBtn").onclick=openHistory;$("menuHistoryBtn").onclick=()=>{closeSheets();openHistory()};
 $("holdRoleBtn").addEventListener("pointerdown",beginRoleReveal);$("holdRoleBtn").addEventListener("pointerup",endRoleReveal);$("holdRoleBtn").addEventListener("pointercancel",endRoleReveal);$("holdRoleBtn").addEventListener("pointerleave",endRoleReveal);$("holdRoleBtn").oncontextmenu=e=>e.preventDefault();
-updateSoundUi();
+applyVoiceVolume();updateSoundUi();
 
 (async function boot(){updateSoundUi();const raw=localStorage.getItem(STORE);if(raw){try{const x=JSON.parse(raw);roomCode=x.roomCode;playerId=x.playerId;token=x.token;playerName=x.playerName;isHost=x.isHost;if(roomCode&&playerId&&token){await enter();return}}catch{clear()}}const q=new URLSearchParams(location.search).get("room");if(q){$("roomCodeInput").value=normCode(q);show("setupScreen")}})();

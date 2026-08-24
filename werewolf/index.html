@@ -74,8 +74,16 @@
       <small>Pemain yang baru mendapat role sama akan memiliki peluang jauh lebih kecil mendapatkannya lagi pada match berikutnya.</small>
     </div>
     <div class="moderator-lobby">
-      <div><span>🎙️</span><p><b>Moderator Otomatis</b><small>Narasi tampil di semua HP. Audio & efek atmosfer diputar dari HP Host agar tidak tumpang tindih.</small></p></div>
-      <button id="lobbySoundBtn" type="button">🔊 AUDIO ON</button>
+      <div><span>🎙️</span><p><b>Moderator Otomatis</b><small>Narasi tampil di semua HP. Suara narrator utama diputar dari HP Host agar tidak tumpang tindih.</small></p></div>
+      <div class="moderator-actions">
+        <button id="lobbySoundBtn" type="button">🔊 AUDIO ON</button>
+        <button id="testNarratorBtn" type="button">▶ TEST NARATOR</button>
+      </div>
+      <label class="narrator-volume">
+        <span>VOLUME NARATOR</span>
+        <input id="narratorVolume" type="range" min="20" max="100" step="5" value="85">
+        <b id="narratorVolumeText">85%</b>
+      </label>
     </div>
     <button id="historyBtn" class="history-btn" type="button">🕘 Riwayat Pertandingan</button>
     <button id="startGameBtn" class="big-btn start">MULAI GAME</button>
@@ -129,7 +137,8 @@
     <div id="horrorText"></div>
     <small id="horrorSubtext">Moderator</small>
   </div>
-  <audio id="wwNarratorAudio" preload="auto"></audio>
+  <audio id="wwNarratorAudio" preload="metadata"></audio>
+  <audio id="wwPrivateAudio" preload="metadata"></audio>
   <audio id="wwSfxAudio" preload="auto"></audio>
   <audio id="wwAmbienceAudio" preload="auto" loop></audio>
 
