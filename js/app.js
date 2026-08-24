@@ -1,4 +1,1 @@
-
-function openWerewolf(){
-window.location.href="games/werewolf/index.html";
-}
+function openWerewolf(){window.location.href='games/werewolf/index.html';}
