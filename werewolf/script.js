@@ -135,26 +135,45 @@ async function leaveLocal(text){if(roomCh)await db.removeChannel(roomCh);if(play
 async function backLobby(){const {error}=await db.rpc("werewolf_reset_lobby",{p_room_code:roomCode,p_host_id:playerId,p_host_token:token});if(error)alert(friendly(error))}
 function showRole(){if(!roleInfo)return;const m=ROLE_META[roleInfo.role];$("myRoleIcon").textContent=m.icon;$("myRoleName").textContent=m.name;$("myRoleDesc").textContent=m.desc;const names=roleInfo.wolf_names||[];$("wolfFriends").classList.toggle("hidden",roleInfo.role!=="wolf");$("wolfFriends").textContent=names.length?`🐺 Werewolf lain: ${names.join(", ")}`:"🐺 Kamu satu-satunya Werewolf.";openSheet("roleModal")}
 
-$("continueBtn").onclick=(e)=>{
-e.preventDefault();
-show("setupScreen");
-};document.querySelectorAll("[data-back-intro]").forEach(b=>b.onclick=()=>show("introScreen"));
+$("continueBtn").onclick=()=>show("setupScreen");document.querySelectorAll("[data-back-intro]").forEach(b=>b.onclick=()=>show("introScreen"));
 $("openRolesBtn").onclick=()=>openSheet("rolesHelpModal");$("lobbyHelpBtn").onclick=()=>openSheet("rolesHelpModal");$("menuRulesBtn").onclick=()=>{closeSheets();openSheet("rolesHelpModal")};
 document.querySelectorAll("[data-close-sheet]").forEach(b=>b.onclick=closeSheets);$("closeRoleBtn").onclick=closeSheets;
-$("createRoomBtn").onclick=(e)=>{
-e.preventDefault();
-createRoom();
-};
-$("joinRoomBtn").onclick=(e)=>{
-e.preventDefault();
-joinRoom();
-};
-$("landingJoinBtn").onclick=(e)=>{
-e.preventDefault();
-show("setupScreen");
-};$("roomCodeInput").oninput=()=>$("roomCodeInput").value=normCode($("roomCodeInput").value);
+$("createRoomBtn").onclick=createRoom;$("joinRoomBtn").onclick=joinRoom;$("roomCodeInput").oninput=()=>$("roomCodeInput").value=normCode($("roomCodeInput").value);
 $("copyCodeBtn").onclick=async()=>{try{await navigator.clipboard.writeText(roomCode);$("copyCodeBtn").textContent="✓";setTimeout(()=>$("copyCodeBtn").textContent="Salin",800)}catch{}};
 $("startGameBtn").onclick=startGame;$("leaveLobbyBtn").onclick=leave;$("roleBtn").onclick=showRole;$("gameMenuBtn").onclick=()=>openSheet("menuSheet");$("leaveGameBtn").onclick=()=>{if(confirm("Benar-benar keluar dari Werewolf?"))leave()};$("backLobbyBtn").onclick=backLobby;
 
 (async function boot(){const raw=localStorage.getItem(STORE);if(raw){try{const x=JSON.parse(raw);roomCode=x.roomCode;playerId=x.playerId;token=x.token;playerName=x.playerName;isHost=x.isHost;if(roomCode&&playerId&&token){await enter();return}}catch{clear()}}const q=new URLSearchParams(location.search).get("room");if(q){$("roomCodeInput").value=normCode(q);show("setupScreen")}})();
 
+
+
+// GAME ALPI V12 - LANDING BUTTON REPAIR
+window.addEventListener("load", function(){
+
+    const create = document.getElementById("continueBtn");
+    const join = document.getElementById("landingJoinBtn");
+
+    if(create){
+        create.removeAttribute("disabled");
+        create.style.pointerEvents="auto";
+        create.onclick=function(e){
+            e.preventDefault();
+            const setup=document.getElementById("setupScreen");
+            if(setup){
+                show("setupScreen");
+            }
+        };
+    }
+
+    if(join){
+        join.removeAttribute("disabled");
+        join.style.pointerEvents="auto";
+        join.onclick=function(e){
+            e.preventDefault();
+            const setup=document.getElementById("setupScreen");
+            if(setup){
+                show("setupScreen");
+            }
+        };
+    }
+
+});

@@ -1,13 +1,10 @@
-Game Alpi Werewolf V11
+Game Alpi Werewolf V12
 
 Fix:
-- Rebuild from original werewolf source.
-- ZIP structure restored: Game_Alpi-main/werewolf.
-- Landing CREATE ROOM fixed.
-- Landing JOIN ROOM fixed.
-- Existing Supabase logic preserved.
+- Rebuilt from original source.
+- Landing button events attached after page load.
+- Removed previous experimental handlers.
+- Fixed click priority with CSS.
 
 Next:
-- Test create room.
-- Test join room.
-- Continue lobby realtime.
+Connect button flow to lobby and Supabase.

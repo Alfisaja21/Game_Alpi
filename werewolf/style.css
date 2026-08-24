@@ -599,3 +599,21 @@ button,
 .werewolf-hero::after {
     pointer-events:none;
 }
+
+
+/* V12 click priority fix */
+.big-btn{
+    position:relative;
+    z-index:999;
+    pointer-events:auto !important;
+}
+
+.introScreen,
+.screen{
+    position:relative;
+    z-index:2;
+}
+
+.forest-bg{
+    pointer-events:none;
+}
