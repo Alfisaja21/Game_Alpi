@@ -1,7 +1,13 @@
-Werewolf V10
+Game Alpi Werewolf V11
 
 Fix:
-- Landing CREATE ROOM opens setup.
-- Landing JOIN ROOM now has id and opens setup.
-- Existing Supabase room logic preserved.
-- No schema changes.
+- Rebuild from original werewolf source.
+- ZIP structure restored: Game_Alpi-main/werewolf.
+- Landing CREATE ROOM fixed.
+- Landing JOIN ROOM fixed.
+- Existing Supabase logic preserved.
+
+Next:
+- Test create room.
+- Test join room.
+- Continue lobby realtime.

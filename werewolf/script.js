@@ -135,12 +135,24 @@ async function leaveLocal(text){if(roomCh)await db.removeChannel(roomCh);if(play
 async function backLobby(){const {error}=await db.rpc("werewolf_reset_lobby",{p_room_code:roomCode,p_host_id:playerId,p_host_token:token});if(error)alert(friendly(error))}
 function showRole(){if(!roleInfo)return;const m=ROLE_META[roleInfo.role];$("myRoleIcon").textContent=m.icon;$("myRoleName").textContent=m.name;$("myRoleDesc").textContent=m.desc;const names=roleInfo.wolf_names||[];$("wolfFriends").classList.toggle("hidden",roleInfo.role!=="wolf");$("wolfFriends").textContent=names.length?`🐺 Werewolf lain: ${names.join(", ")}`:"🐺 Kamu satu-satunya Werewolf.";openSheet("roleModal")}
 
-$("continueBtn").onclick=()=>show("setupScreen");
-$("landingJoinBtn").onclick=()=>show("setupScreen");
-document.querySelectorAll("[data-back-intro]").forEach(b=>b.onclick=()=>show("introScreen"));
+$("continueBtn").onclick=(e)=>{
+e.preventDefault();
+show("setupScreen");
+};document.querySelectorAll("[data-back-intro]").forEach(b=>b.onclick=()=>show("introScreen"));
 $("openRolesBtn").onclick=()=>openSheet("rolesHelpModal");$("lobbyHelpBtn").onclick=()=>openSheet("rolesHelpModal");$("menuRulesBtn").onclick=()=>{closeSheets();openSheet("rolesHelpModal")};
 document.querySelectorAll("[data-close-sheet]").forEach(b=>b.onclick=closeSheets);$("closeRoleBtn").onclick=closeSheets;
-$("createRoomBtn").onclick=createRoom;$("joinRoomBtn").onclick=joinRoom;$("roomCodeInput").oninput=()=>$("roomCodeInput").value=normCode($("roomCodeInput").value);
+$("createRoomBtn").onclick=(e)=>{
+e.preventDefault();
+createRoom();
+};
+$("joinRoomBtn").onclick=(e)=>{
+e.preventDefault();
+joinRoom();
+};
+$("landingJoinBtn").onclick=(e)=>{
+e.preventDefault();
+show("setupScreen");
+};$("roomCodeInput").oninput=()=>$("roomCodeInput").value=normCode($("roomCodeInput").value);
 $("copyCodeBtn").onclick=async()=>{try{await navigator.clipboard.writeText(roomCode);$("copyCodeBtn").textContent="✓";setTimeout(()=>$("copyCodeBtn").textContent="Salin",800)}catch{}};
 $("startGameBtn").onclick=startGame;$("leaveLobbyBtn").onclick=leave;$("roleBtn").onclick=showRole;$("gameMenuBtn").onclick=()=>openSheet("menuSheet");$("leaveGameBtn").onclick=()=>{if(confirm("Benar-benar keluar dari Werewolf?"))leave()};$("backLobbyBtn").onclick=backLobby;
 
