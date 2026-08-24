@@ -13,17 +13,14 @@
 
 <header class="nav">
     <div class="brand">
-        <div class="logo">GA</div>
+        <div class="logo" id="gaLogo">GA</div>
         <div>
             <h3>Game Alpi</h3>
             <p>Main bareng. Langsung dari HP.</p>
         </div>
     </div>
 
-    <div class="nav-actions">
-        
-        
-    </div>
+    <div class="nav-actions"></div>
 </header>
 
 <section class="hero">
@@ -76,6 +73,38 @@
 </section>
 
 </main>
+<script>
+function openDevTools(){
+    const pass = prompt("Developer Access");
+    if(pass === "alpi-dev"){
+        alert("Developer Bot Mode Activated 🤖");
+    }
+}
+</script>
 
+<script>
+let gaClickCount = 0;
+let gaTimer;
+
+document.getElementById("gaLogo").addEventListener("click", function(){
+    gaClickCount++;
+
+    clearTimeout(gaTimer);
+    gaTimer = setTimeout(() => {
+        gaClickCount = 0;
+    }, 1500);
+
+    if(gaClickCount >= 5){
+        gaClickCount = 0;
+        openBotMode();
+    }
+});
+
+function openBotMode(){
+    alert("Developer Bot Mode Activated 🤖");
+    // Tempat membuka panel bot testing setiap game
+}
+</script>
 </body>
+
 </html>
