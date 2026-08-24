@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Alpi Werewolf</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app">
+
+<section id="home" class="page active">
+<div class="moon">🌕</div>
+<h1>Werewolf</h1>
+<p>The village is sleeping...</p>
+
+<input id="nameInput" placeholder="Your name">
+
+<button id="createBtn">🐺 CREATE ROOM</button>
+<button id="joinBtn" class="secondary">👥 JOIN ROOM</button>
+</section>
+
+
+<section id="lobby" class="page">
+<h2>Lobby</h2>
+
+<div class="room">
+Room Code:
+<b id="roomCode">------</b>
+</div>
+
+<div id="playerList"></div>
+
+<button id="startBtn">START GAME</button>
+</section>
+
+
+<section id="game" class="page">
+<h2 id="phase">Night</h2>
+<div class="card">
+Your role will appear here
+</div>
+</section>
+
+<div id="toast"></div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app.js"></script>
+
+</body>
+</html>
