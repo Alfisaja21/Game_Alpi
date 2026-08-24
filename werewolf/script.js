@@ -143,3 +143,39 @@ $("copyCodeBtn").onclick=async()=>{try{await navigator.clipboard.writeText(roomC
 $("startGameBtn").onclick=startGame;$("leaveLobbyBtn").onclick=leave;$("roleBtn").onclick=showRole;$("gameMenuBtn").onclick=()=>openSheet("menuSheet");$("leaveGameBtn").onclick=()=>{if(confirm("Benar-benar keluar dari Werewolf?"))leave()};$("backLobbyBtn").onclick=backLobby;
 
 (async function boot(){const raw=localStorage.getItem(STORE);if(raw){try{const x=JSON.parse(raw);roomCode=x.roomCode;playerId=x.playerId;token=x.token;playerName=x.playerName;isHost=x.isHost;if(roomCode&&playerId&&token){await enter();return}}catch{clear()}}const q=new URLSearchParams(location.search).get("room");if(q){$("roomCodeInput").value=normCode(q);show("setupScreen")}})();
+
+// ===============================
+// WEREWOLF V6 ROOM FLOW PREP
+// ===============================
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    const createBtn = document.getElementById("createRoomBtn");
+    const joinBtn = document.getElementById("joinRoomBtn");
+
+    if(createBtn){
+        createBtn.addEventListener("click", () => {
+            createRoomFlow();
+        });
+    }
+
+    if(joinBtn){
+        joinBtn.addEventListener("click", () => {
+            joinRoomFlow();
+        });
+    }
+
+});
+
+function createRoomFlow(){
+    alert("Create Room Werewolf dipanggil 🐺");
+    // Tempat menghubungkan logic Supabase room creation
+}
+
+function joinRoomFlow(){
+    const code = prompt("Masukkan kode room:");
+    if(code){
+        alert("Join Room: " + code);
+        // Tempat menghubungkan logic Supabase join room
+    }
+}

@@ -1,0 +1,12 @@
+Werewolf UI Update V6
+
+Changes:
+- Button Create Room and Join Room connected with JS event.
+- Prepared room flow integration.
+- Added join room input.
+- UI remains mobile game style.
+
+Next:
+- Connect create/join flow to Supabase.
+- Build lobby realtime.
+- Add audio system.
