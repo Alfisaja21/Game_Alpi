@@ -26,7 +26,7 @@ $("createBtn").onclick=async()=>{
     const name=$("playerName").value.trim();
 
     if(!name){
-        alert("Isi nama dulu");
+        showToast("Isi nama dulu");
         return;
     }
 
@@ -51,7 +51,7 @@ $("joinBtn").onclick=()=>{
     const name=$("playerName").value.trim();
 
     if(!name){
-        alert("Isi nama dulu");
+        showToast("Isi nama dulu");
         return;
     }
 
@@ -94,3 +94,21 @@ $("startBtn").onclick=()=>{
     $("roleCard").innerText=
     "Role akan diberikan dari Supabase";
 };
+
+
+function showToast(message){
+    let toast=document.getElementById("gameToast");
+
+    if(!toast){
+        toast=document.createElement("div");
+        toast.id="gameToast";
+        document.body.appendChild(toast);
+    }
+
+    toast.innerText=message;
+    toast.classList.add("show");
+
+    setTimeout(()=>{
+        toast.classList.remove("show");
+    },2500);
+}

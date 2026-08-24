@@ -87,3 +87,26 @@ background:#151e38;
 border-radius:12px;
 margin:8px 0;
 }
+
+
+#gameToast{
+    position:fixed;
+    left:50%;
+    bottom:40px;
+    transform:translateX(-50%) translateY(30px);
+    background:#1b2545;
+    color:white;
+    padding:14px 22px;
+    border-radius:16px;
+    border:1px solid rgba(255,255,255,.15);
+    box-shadow:0 10px 30px rgba(0,0,0,.4);
+    opacity:0;
+    transition:.3s;
+    z-index:9999;
+    font-weight:700;
+}
+
+#gameToast.show{
+    opacity:1;
+    transform:translateX(-50%) translateY(0);
+}
