@@ -40,6 +40,12 @@ const WW_VOICE={
  morningDeath:"audio/narrator/morning-death.mp3",
  discussionStart:"audio/narrator/discussion-start.mp3",
  votingStart:"audio/narrator/voting-start.mp3",
+ wolfDone:"audio/narrator/wolf-done.mp3",
+ seerDone:"audio/narrator/seer-done.mp3",
+ doctorDone:"audio/narrator/doctor-done.mp3",
+ morningSaved:"audio/narrator/morning-saved.mp3",
+ discussionWarning:"audio/narrator/discussion-warning.mp3",
+ voteResult:"audio/narrator/vote-result.mp3",
  townWin:"audio/narrator/town-win.mp3",
  wolfWin:"audio/narrator/wolf-win.mp3"
 };
@@ -180,18 +186,78 @@ function playPrivateRoleNarrator(){
 }
 function narrationData(){
  const ph=room?.phase;
- if(ph==="night_wolf")return{icon:"🌙",text:"Malam telah tiba. Semua warga menutup mata. Werewolf, bangun dan pilih mangsamu.",sfx:"howl",voices:["nightStart","wolfWake"]};
- if(ph==="night_seer")return{icon:"🔮",text:"Werewolf kembali tidur. Seer, buka mata dan periksa satu pemain.",voices:["seerWake"]};
- if(ph==="night_doctor")return{icon:"🩺",text:"Seer kembali tidur. Doctor, pilih satu orang untuk dilindungi malam ini.",voices:["doctorWake"]};
- if(ph==="day_result"&&room?.day_victim_id)return{icon:"☀️",text:`Pagi telah datang. ${pname(room.day_victim_id)} tidak selamat dari malam yang panjang.`,sfx:"death",voices:["morningDeath"]};
- if(ph==="day_result")return{icon:"☀️",text:"Matahari terbit. Malam ini tidak ada warga yang tersingkir.",sfx:"morning",voices:[]};
+
+ // Awal malam.
+ if(ph==="night_wolf")return{
+   icon:"🌙",
+   text:"Malam telah tiba. Semua warga menutup mata. Werewolf, bangun dan pilih mangsamu.",
+   sfx:"howl",
+   voices:["nightStart","wolfWake"]
+ };
+
+ // Backend sudah berpindah ke Seer saat pilihan Werewolf selesai.
+ // Karena itu wolf-done menjadi penutup sebelum Seer dibangunkan.
+ if(ph==="night_seer")return{
+   icon:"🔮",
+   text:"Pilihan Werewolf telah dibuat. Seer, sekarang giliranmu membuka mata.",
+   voices:["wolfDone","seerWake"]
+ };
+
+ // Seer selesai, kemudian Doctor bangun.
+ if(ph==="night_doctor")return{
+   icon:"🩺",
+   text:"Seer kembali tidur. Doctor, pilih satu orang untuk dilindungi malam ini.",
+   voices:["seerDone","doctorWake"]
+ };
+
+ // Doctor selalu menutup rangkaian malam.
+ if(ph==="day_result"&&room?.day_victim_id)return{
+   icon:"☀️",
+   text:`Pagi telah datang. ${pname(room.day_victim_id)} tidak selamat dari malam yang panjang.`,
+   sfx:"death",
+   voices:["doctorDone","morningDeath"]
+ };
+
+ if(ph==="day_result")return{
+   icon:"☀️",
+   text:"Matahari terbit. Tidak ada warga yang tersingkir malam ini.",
+   sfx:"morning",
+   voices:["doctorDone","morningSaved"]
+ };
+
  if(ph==="discussion"){
    const starter=room?.discussion_speaker_id?pname(room.discussion_speaker_id):null;
-   return{icon:"💬",text:starter?`Waktu diskusi dimulai. ${starter}, mulai sampaikan kecurigaanmu terlebih dahulu.`:"Waktu diskusi dimulai. Cari siapa yang paling mencurigakan.",voices:["discussionStart"]}
+   return{
+     icon:"💬",
+     text:starter
+       ?`Waktu diskusi dimulai. ${starter}, mulai sampaikan kecurigaanmu terlebih dahulu.`
+       :"Waktu diskusi dimulai. Cari siapa yang paling mencurigakan.",
+     voices:["discussionStart"]
+   }
  }
- if(ph==="voting")return{icon:"🗳️",text:"Diskusi selesai. Sekarang tentukan pilihanmu. Satu suara dapat mengubah nasib desa.",sfx:"vote",voices:["votingStart"]};
- if(ph==="vote_result"&&room?.vote_eliminated_id)return{icon:"⚖️",text:`Keputusan telah dibuat. ${pname(room.vote_eliminated_id)} harus meninggalkan desa.`,sfx:"death",voices:[]};
- if(ph==="vote_result")return{icon:"⚖️",text:"Suara warga berakhir seri. Tidak ada seorang pun yang meninggalkan desa.",voices:[]};
+
+ if(ph==="voting")return{
+   icon:"🗳️",
+   text:"Diskusi selesai. Sekarang tentukan pilihanmu. Satu suara dapat mengubah nasib desa.",
+   sfx:"vote",
+   voices:["votingStart"]
+ };
+
+ if(ph==="vote_result"&&room?.vote_eliminated_id)return{
+   icon:"⚖️",
+   text:`Keputusan telah dibuat. ${pname(room.vote_eliminated_id)} harus meninggalkan desa.`,
+   sfx:"death",
+   voices:["voteResult"]
+ };
+
+ // vote-result.mp3 bersifat pengumuman seseorang terpilih,
+ // jadi tidak digunakan pada kondisi seri.
+ if(ph==="vote_result")return{
+   icon:"⚖️",
+   text:"Suara warga berakhir seri. Tidak ada seorang pun yang meninggalkan desa.",
+   voices:[]
+ };
+
  return null
 }
 function horrorNarration(force=false){
@@ -494,7 +560,36 @@ async function startGame(){
 async function startVoting(){await db.rpc("werewolf_start_voting",{p_room_code:roomCode,p_host_id:playerId,p_host_token:token})}
 async function submitVote(id){if(actionBusy)return;actionBusy=true;const {error}=await db.rpc("werewolf_vote",{p_player_id:playerId,p_player_token:token,p_target_id:id});if(error)alert(friendly(error));else document.querySelectorAll("[data-target]").forEach(b=>{b.disabled=true;b.classList.toggle("selected",Number(b.dataset.target)===id)});actionBusy=false}
 async function timeoutPhase(){if(timeoutBusy)return;timeoutBusy=true;await db.rpc("werewolf_timeout_phase",{p_room_code:roomCode});setTimeout(()=>timeoutBusy=false,800)}
-function startTimer(){if(timer)clearInterval(timer);const tick=async()=>{if(!room?.phase_started_at||!room?.phase_seconds){$("phaseTimer").textContent="∞";return}const end=new Date(room.phase_started_at).getTime()+room.phase_seconds*1000,left=Math.max(0,Math.ceil((end-Date.now())/1000));$("phaseTimer").textContent=`${left}s`;$("phaseTimer").classList.toggle("warn",left<=10);$("phaseTimer").classList.toggle("danger",left<=5);if(left<=0)await timeoutPhase()};tick();timer=setInterval(tick,500)}
+function startTimer(){
+ if(timer)clearInterval(timer);
+
+ const tick=async()=>{
+   if(!room?.phase_started_at||!room?.phase_seconds){
+     $("phaseTimer").textContent="∞";
+     return
+   }
+
+   const end=new Date(room.phase_started_at).getTime()+room.phase_seconds*1000;
+   const left=Math.max(0,Math.ceil((end-Date.now())/1000));
+
+   $("phaseTimer").textContent=`${left}s`;
+   $("phaseTimer").classList.toggle("warn",left<=10);
+   $("phaseTimer").classList.toggle("danger",left<=5);
+
+   // Warning narrator hanya dari HP Host dan hanya sekali per ronde.
+   if(room?.phase==="discussion"&&left>0&&left<=10&&hostAudioOn()){
+     const warnKey=`discussion-warning:${roomCode||""}:${room?.match_no||0}:${room?.round_no||0}`;
+     if(!playedNarrationKeys.has(warnKey)&&voiceSequenceKey!==warnKey){
+       playVoiceSequence(warnKey,["discussionWarning"],250)
+     }
+   }
+
+   if(left<=0)await timeoutPhase()
+ };
+
+ tick();
+ timer=setInterval(tick,500)
+}
 async function leave(){const {error}=await db.rpc("werewolf_leave_room",{p_player_id:playerId,p_player_token:token});if(error)alert(friendly(error));else leaveLocal("")}
 async function leaveLocal(text){if(roomCh)await db.removeChannel(roomCh);if(playerCh)await db.removeChannel(playerCh);setNightAmbience(false);stopNarrator();$("wwPrivateAudio")?.pause();$("wwSfxAudio")?.pause();clear();roomCode=playerId=token=playerName=null;room=null;players=[];roleInfo=null;lastNarrationKey=null;show("setupScreen");msg("setupMessage",text)}
 async function backLobby(){stopNarrator();playedNarrationKeys.clear();lastNarrationKey=null;roleInfo=null;const {error}=await db.rpc("werewolf_reset_lobby",{p_room_code:roomCode,p_host_id:playerId,p_host_token:token});if(error)alert(friendly(error))}
