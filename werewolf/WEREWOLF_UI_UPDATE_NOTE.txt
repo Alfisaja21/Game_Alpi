@@ -1,0 +1,12 @@
+Game Alpi Werewolf UI Update V1
+
+Perubahan:
+- Menambahkan layer styling UI tanpa mengubah logic JS/Supabase.
+- Fokus mobile game layout.
+- Siap dikembangkan untuk:
+  - lobby player card
+  - reveal role animation
+  - night/day phase UI
+  - voting interface
+
+File ini aman untuk dihapus jika ingin rollback.
