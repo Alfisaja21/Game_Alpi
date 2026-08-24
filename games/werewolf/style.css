@@ -1,102 +1,48 @@
 
-*{
-box-sizing:border-box;
-font-family:Inter,sans-serif;
-}
-
 body{
 margin:0;
-min-height:100vh;
-background:#f6f7ff;
+height:100vh;
+background:#f7f8ff;
+display:flex;
+align-items:center;
+justify-content:center;
 color:#252b42;
+font-family:Inter,sans-serif
 }
-
-.game{
-max-width:500px;
-margin:auto;
-padding:25px;
-}
-
-.hero,.lobby{
+.page{
+width:min(92%,420px);
 background:white;
-border-radius:35px;
-padding:35px;
+padding:25px;
+border-radius:30px;
 text-align:center;
-box-shadow:0 25px 50px #0002;
-position:relative;
-overflow:hidden;
+box-shadow:0 20px 50px #0002
 }
-
-.bg{
-position:fixed;
-width:300px;
-height:300px;
-background:#8d7cff;
-filter:blur(80px);
-opacity:.25;
+.moon,.wolf{
+font-size:65px;
+animation:float 3s infinite
 }
-
-.moon{
-font-size:80px;
-animation:float 3s infinite;
-}
-
-.wolf{
-font-size:100px;
-animation:float 2.5s infinite;
-filter:drop-shadow(0 15px 10px #0003);
-}
-
+.wolf{animation-delay:.5s}
 @keyframes float{
-50%{transform:translateY(-12px)}
+50%{transform:translateY(-8px)}
 }
-
-h1{
-font-size:42px;
-}
-
 button{
 width:100%;
-padding:16px;
-margin-top:12px;
+padding:15px;
 border:0;
-border-radius:20px;
+border-radius:18px;
+margin-top:12px;
 background:#6c63ff;
 color:white;
-font-weight:bold;
-cursor:pointer;
-box-shadow:0 12px 20px #6c63ff44;
+font-weight:bold
 }
-
-button:active{
-transform:scale(.96);
-}
-
-.secondary{
-background:#ffb84d;
-}
-
-.tags{
-margin-top:20px;
-display:flex;
-gap:10px;
-justify-content:center;
-flex-wrap:wrap;
-}
-
+.join{background:#ffb84d}
 .tags span{
+display:inline-block;
+margin-top:18px;
 background:#f0efff;
-padding:10px 15px;
-border-radius:20px;
+padding:8px 12px;
+border-radius:20px
 }
-
-.room,.players div{
-background:#f4f5ff;
-padding:15px;
-margin-top:15px;
-border-radius:20px;
-}
-
-.hidden{
-display:none;
+.modal{
+display:none
 }

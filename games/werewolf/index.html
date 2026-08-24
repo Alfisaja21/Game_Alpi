@@ -1,61 +1,39 @@
-
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Werewolf Village</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="bg"></div>
+<div class="page">
 
-<main class="game">
-
-<div class="top">
-<a href="../../index.html">← Back</a>
-</div>
-
-<section class="hero">
 <div class="moon">🌕</div>
 <div class="wolf">🐺</div>
 
 <h1>Werewolf Village</h1>
-<p>Temukan siapa yang bersembunyi di antara temanmu.</p>
+<p>Temukan siapa yang bersembunyi.</p>
 
-<button id="createRoom">CREATE ROOM</button>
-<button id="joinRoom" class="secondary">JOIN ROOM</button>
+<button>CREATE ROOM</button>
+<button class="join">JOIN ROOM</button>
 
 <div class="tags">
-<span>👥 5-20 Player</span>
+<span>👥 5-20</span>
 <span>🎮 Multiplayer</span>
 </div>
 
-</section>
-
-
-<section class="lobby hidden" id="lobby">
-
-<h2>Lobby</h2>
-
-<div class="room">
-ROOM CODE
-<strong id="roomCode">ALPI01</strong>
 </div>
 
-<div class="players">
-<div>👑 Alpi (Host)</div>
-<div>🙂 Player 2</div>
+<div id="joinModal" class="modal">
+<div class="modalBox">
+<h2>JOIN ROOM</h2>
+<input placeholder="Kode Room">
+<button>JOIN</button>
 </div>
-
-<button>START GAME</button>
-
-</section>
-
-</main>
+</div>
 
 <script src="game.js"></script>
-
 </body>
 </html>
