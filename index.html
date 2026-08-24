@@ -1,180 +1,51 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#07111f">
-  <title>Game Alpi</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Game Alpi</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-<main class="hub">
+<div class="bg"></div>
+<main class="container">
 
-  <header class="app-header">
-    <div class="brand-mark" data-dev-trigger title="Game Alpi">GA</div>
-    <div class="brand-copy">
-      <strong data-dev-trigger>Game Alpi</strong>
-      <span>Main bareng. Langsung dari HP.</span>
-    </div>
-    <div class="header-badge">MOBILE</div>
-  </header>
+<header class="nav">
+<div class="brand">
+<div class="logo">GA</div>
+<div>
+<h3>Game Alpi</h3>
+<p>Main bareng. Langsung dari HP.</p>
+</div>
+</div>
+</header>
 
-  <section class="featured">
-    <div class="featured-copy">
-      <span class="featured-kicker">GAME TERBARU</span>
-      <h1>UNO <small>• Game Alpi</small></h1>
-      <p>Buang kartu yang cocok, gunakan kartu aksi, dan habiskan kartumu lebih dulu.</p>
-      <div class="featured-meta">
-        <span>👥 2–20</span>
-        <span>📱 Multi HP</span>
-      </div>
-      <a href="uno/" class="featured-play">MAIN SEKARANG <b>›</b></a>
-    </div>
-    <div class="featured-art" aria-hidden="true">
-      <div class="mini-card card-red">7</div>
-      <div class="mini-card card-yellow">+2</div>
-      <div class="mini-card card-wild">W</div>
-    </div>
-  </section>
+<section class="hero">
+<div>
+<span>🎮 GAME PLATFORM</span>
+<h1>Dunia Game<br>Dalam Satu Portal</h1>
+<p>Pilih game favoritmu, buat room, dan main bersama teman.</p>
+<button onclick="location.href='uno/'">MAIN SEKARANG</button>
+</div>
+<div class="hero-art">🃏</div>
+</section>
 
-  <div class="section-row">
-    <div>
-      <span class="section-kicker">KOLEKSI GAME</span>
-      <h2>Pilih game</h2>
-    </div>
-    <span class="section-count">5 aktif</span>
-  </div>
+<section>
+<div class="title"><p>KOLEKSI GAME</p><h2>Game Populer</h2></div>
+<div class="games">
+<a class="card blue" href="impostor/"><b>🕵️</b><h3>Impostor</h3><p>3-20 pemain</p></a>
+<a class="card red" href="uno/"><b>🃏</b><h3>UNO</h3><p>2-20 pemain</p></a>
+<a class="card cyan" href="tebak-angka/"><b>🔢</b><h3>Tebak Angka</h3><p>1 pemain</p></a>
+<a class="card purple" href="werewolf/"><b>🐺</b><h3>Werewolf</h3><p>5-20 pemain</p></a>
+<a class="card gold" href="catur/"><b>♟</b><h3>Catur</h3><p>1-2 pemain</p></a>
+</div>
+</section>
 
-  <section class="game-grid">
-    <a class="game-tile impostor" href="impostor/">
-      <div class="tile-icon">🕵️</div>
-      <strong>Impostor</strong>
-      <span>3–20</span>
-    </a>
+<section>
+<div class="title"><p>SEGERA HADIR</p><h2>Game Berikutnya</h2></div>
+<div class="coming"><div>🎨 Gambar & Tebak</div><div>☎️ Bisik Gambar</div><div>🤔 Jawaban Palsu</div></div>
+</section>
 
-    <a class="game-tile uno" href="uno/">
-      <div class="tile-icon">🃏</div>
-      <strong>UNO</strong>
-      <span>2–20</span>
-    </a>
-
-    <a class="game-tile number" href="tebak-angka/">
-      <div class="tile-icon">🔢</div>
-      <strong>Tebak Angka</strong>
-      <span>1 Pemain</span>
-    </a>
-
-    <a class="game-tile werewolf" href="werewolf/">
-      <div class="tile-icon">🐺</div>
-      <strong>Werewolf</strong>
-      <span>5–20</span>
-    </a>
-
-    <a class="game-tile chess" href="catur/">
-      <div class="tile-icon">♟️</div>
-      <strong>Catur</strong>
-      <span>1–2</span>
-    </a>
-  </section>
-
-  
-  <div class="section-row">
-    <div>
-      <span class="section-kicker">SEGERA HADIR</span>
-      <h2>Game berikutnya</h2>
-    </div>
-    <span class="section-count">11 konsep</span>
-  </div>
-
-  <section id="upcomingGames" class="game-grid upcoming-grid">
-    <div class="game-tile locked" aria-disabled="true">
-      <div class="lock-chip">🔒</div>
-      <div class="tile-icon">🎨</div>
-      <strong>Gambar & Tebak</strong>
-      <span>3–12</span>
-    </div>
-
-    <div class="game-tile locked" aria-disabled="true">
-      <div class="lock-chip">🔒</div>
-      <div class="tile-icon">☎️</div>
-      <strong>Bisik Gambar</strong>
-      <span>4–12</span>
-    </div>
-
-    <div class="game-tile locked" aria-disabled="true">
-      <div class="lock-chip">🔒</div>
-      <div class="tile-icon">🤥</div>
-      <strong>Jawaban Palsu</strong>
-      <span>3–12</span>
-    </div>
-
-    <div class="game-tile locked" aria-disabled="true">
-      <div class="lock-chip">🔒</div>
-      <div class="tile-icon">🔐</div>
-      <strong>Kode Rahasia</strong>
-      <span>4–12</span>
-    </div>
-
-    <div class="game-tile locked" aria-disabled="true">
-      <div class="lock-chip">🔒</div>
-      <div class="tile-icon">😂</div>
-      <strong>Jawaban Lucu</strong>
-      <span>3–12</span>
-    </div>
-
-    <div class="game-tile locked" aria-disabled="true">
-      <div class="lock-chip">🔒</div>
-      <div class="tile-icon">💣</div>
-      <strong>Bom Kata</strong>
-      <span>3–20</span>
-    </div>
-
-    <div class="game-tile locked" aria-disabled="true">
-      <div class="lock-chip">🔒</div>
-      <div class="tile-icon">👥</div>
-      <strong>Siapa Paling?</strong>
-      <span>3–20</span>
-    </div>
-
-    <div class="game-tile locked" aria-disabled="true">
-      <div class="lock-chip">🔒</div>
-      <div class="tile-icon">🔤</div>
-      <strong>Sambung Kata</strong>
-      <span>2–20</span>
-    </div>
-
-    <div class="game-tile locked" aria-disabled="true">
-      <div class="lock-chip">🔒</div>
-      <div class="tile-icon">❓</div>
-      <strong>Siapa Aku?</strong>
-      <span>3–12</span>
-    </div>
-
-    <div class="game-tile locked poker" aria-disabled="true">
-      <div class="lock-chip">🔒</div>
-      <div class="tile-icon">♠️</div>
-      <strong>Poker</strong>
-      <span>Segera</span>
-    </div>
-
-    <div class="game-tile locked domino" aria-disabled="true">
-      <div class="lock-chip">🔒</div>
-      <div class="tile-icon">🁫</div>
-      <strong>Domino</strong>
-      <span>Segera</span>
-    </div>
-  </section>
-
-<section class="quick-guide">
-    <div class="guide-icon">💡</div>
-    <div>
-      <strong>Baru pertama main?</strong>
-      <p>Buka game untuk melihat tujuan, aturan dasar, dan petunjuk yang tersedia sebelum mulai bermain.</p>
-    </div>
-  </section>
-
-  <footer>Game Alpi • Mobile Game Hub</footer>
 </main>
-<script src="developer.js"></script>
 </body>
 </html>
