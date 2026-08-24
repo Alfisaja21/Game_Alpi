@@ -1,50 +1,66 @@
-GAME ALPI — FULL FRONTEND LATEST + WEREWOLF V2 ATMOSPHERE
-24 Agustus 2026
+GAME ALPI — DARK 3D UI SHELL V1
 
-PAKET INI ADALAH FRONTEND PENUH hasil penggabungan versi terbaru yang tersedia dalam percakapan/proyek ini.
-Bukan ZIP patch saja.
+Fokus update ini hanya tampilan luar / pre-game. Logic gameplay dan SQL tidak diubah.
 
-SUDAH DIGABUNGKAN
-- Homepage mobile Game Alpi terbaru.
-- Game aktif: Impostor, UNO, Tebak Angka, Werewolf, Catur.
-- Upcoming termasuk Poker dan Domino.
-- Tap Target sudah tidak disertakan.
-- UNO V4 + audit/fix frontend terbaru.
-- Catur Multi HP, 1 HP, serta Lawan Bot publik.
-- Developer Mode tersembunyi: tap logo/tulisan Game Alpi 5x.
-- Bot testing developer untuk UNO, Impostor, Werewolf.
-- Fix session Impostor: match finished tidak otomatis membuka hasil lama saat masuk kembali dari Pilih Mode.
-- Werewolf V2 atmosphere digabungkan di atas versi Werewolf terbaru tanpa menghapus bot testing/audit.
-
-WEREWOLF V2 ATMOSPHERE YANG SUDAH ADA
-- Tombol role menjadi "🃏 Kartu Saya".
-- Overlay narasi/transisi fase.
-- Animasi panel ringan.
-- Hook audio lokal untuk fase malam, pagi, werewolf, dan voting.
-- Proteksi agar narasi fase tidak terus terulang setiap realtime rerender.
-- Bot testing Werewolf tetap dipertahankan.
-
-AUDIO WEREWOLF
-Folder werewolf/audio sudah tersedia.
-Kode mencari file:
-- night.mp3
-- morning.mp3
-- wolf.mp3
-- vote.mp3
-
-File MP3 narrator final belum berada dalam paket ini. Jangan menganggap README_AUDIO.txt sebagai audio.
-
-PENTING — SQL
-SQL TIDAK dimasukkan ke ZIP frontend ini.
-Jika website kamu sudah menjalankan SQL/patch sebelumnya, cukup replace frontend.
-Untuk instalasi database baru, SQL perlu dijalankan terpisah sesuai urutan versi yang digunakan.
+HOME
+- Grid game aktif menjadi 2 kolom di HP.
+- Dark premium game hub.
+- Depth / 3D CSS ringan.
+- Featured UNO dengan kartu 3D ringan.
+- Ambient glow, grid tipis, stagger animation, press effect.
+- Upcoming games tetap 2 kolom dan lebih compact.
 
 DEVELOPER MODE
-- Tap logo/tulisan Game Alpi 5 kali dengan cepat.
-- Tidak memakai password.
-- Status disimpan di localStorage browser/device.
-- Tap 5 kali lagi untuk mematikannya.
-- Developer Mode adalah fitur tersembunyi, bukan proteksi keamanan penuh.
+- Cara tetap sama: tap logo atau tulisan "Game Alpi" 5x dalam sekitar 2,6 detik.
+- Tidak ada password.
+- Mulai tap ke-2 muncul progress DEV ACCESS 2/5, 3/5, 4/5.
+- Tap ke-5 muncul animasi unlock.
+- Saat aktif muncul badge DEV MODE di kiri bawah.
+- Badge bisa ditekan untuk melihat status dan menonaktifkan Developer Mode.
+- Tetap memakai localStorage dan body.developer-mode sehingga Test Tools lama tetap kompatibel.
 
-CATATAN WEREWOLF
-Permintaan besar V2 seperti role probability anti-streak, Hunter, history penuh, narrator MP3 final, dan visual 3D/low-poly yang lebih jauh BELUM boleh dianggap selesai hanya karena paket ini bernama V2 atmosphere. Paket ini mempertahankan update yang benar-benar sudah dibuat sampai tahap terakhir.
+IMPOSTOR
+- Halaman pilih Multi HP / 1 HP dibuat lebih premium dan 3D ringan.
+- Ringkasan aturan 2 kolom di HP normal.
+- Logic dan link mode tidak diubah.
+
+CATUR
+- Halaman pilih Multi HP / Lawan Bot / 1 HP diperbarui.
+- Lawan Bot tetap public dan menjadi mode featured.
+- Logic bot tidak diubah.
+
+WEREWOLF
+- Hanya intro + setup diperbarui.
+- Bulan, kabut ringan, depth card, rule card 2 kolom.
+- Gameplay tidak disentuh.
+
+UNO
+- Hanya setup sebelum lobby diperbarui.
+- Quick Rules 2 kolom + depth card.
+- Gameplay/table/kartu tidak disentuh.
+
+PERFORMA
+- Tidak memakai Three.js/WebGL.
+- Tidak menambah gambar besar.
+- CSS animation ringan.
+- prefers-reduced-motion didukung.
+
+FILE YANG BERUBAH
+- index.html
+- style.css
+- developer.js
+- impostor/style.css
+- catur/style.css
+- werewolf/style.css
+- uno/style.css
+- readme.txt
+
+TIDAK ADA SQL.
+
+CARA UPDATE
+1. Ekstrak ZIP.
+2. Replace file sesuai folder.
+3. Commit GitHub.
+4. Tunggu Vercel deploy.
+5. Hard refresh browser HP.
+6. Test homepage dan tap Game Alpi 5x.

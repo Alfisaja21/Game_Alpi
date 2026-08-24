@@ -1,61 +1,19 @@
 (()=>{
-  const KEY="gameAlpiDeveloperMode";
-  let active=localStorage.getItem(KEY)==="1";
-  let taps=[];
-
-  function ensureStyle(){
-    if(document.getElementById("gameAlpiDevStyle"))return;
-    const s=document.createElement("style");
-    s.id="gameAlpiDevStyle";
-    s.textContent=`
-      .dev-only{display:none!important}
-      body.developer-mode .dev-only{display:block!important}
-      #gameAlpiDevBadge{position:fixed;z-index:9998;left:8px;bottom:8px;padding:6px 8px;border:1px solid rgba(93,184,255,.35);border-radius:999px;color:#bfe1ff;background:rgba(8,27,46,.94);font:800 8px/1 system-ui,sans-serif;letter-spacing:.08em;box-shadow:0 8px 25px rgba(0,0,0,.3);pointer-events:none}
-      #gameAlpiDevToast{position:fixed;z-index:9999;left:50%;bottom:28px;transform:translateX(-50%) translateY(12px);width:max-content;max-width:calc(100vw - 28px);padding:10px 13px;border:1px solid rgba(95,181,255,.28);border-radius:12px;color:#e8f5ff;background:rgba(8,29,49,.97);font:800 9px/1.35 system-ui,sans-serif;text-align:center;opacity:0;transition:.18s;pointer-events:none;box-shadow:0 18px 42px rgba(0,0,0,.4)}
-      #gameAlpiDevToast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-      [data-dev-trigger]{user-select:none;-webkit-user-select:none}
-    `;
-    document.head.appendChild(s);
-  }
-  function badge(){
-    let b=document.getElementById("gameAlpiDevBadge");
-    if(active&&!b){b=document.createElement("div");b.id="gameAlpiDevBadge";b.textContent="🧪 DEV";document.body.appendChild(b)}
-    if(!active&&b)b.remove();
-  }
-  function toast(text){
-    let t=document.getElementById("gameAlpiDevToast");
-    if(!t){t=document.createElement("div");t.id="gameAlpiDevToast";document.body.appendChild(t)}
-    t.textContent=text;t.classList.add("show");clearTimeout(t._tm);t._tm=setTimeout(()=>t.classList.remove("show"),1800)
-  }
-  function apply(announce=false){
-    ensureStyle();
-    document.body.classList.toggle("developer-mode",active);
-    badge();
-    window.dispatchEvent(new CustomEvent("gamealpi:developerchange",{detail:{active}}));
-    if(announce)toast(active?"🧪 Developer Mode aktif":"Developer Mode nonaktif");
-  }
-  function toggle(){active=!active;localStorage.setItem(KEY,active?"1":"0");apply(true)}
-  function tap(){
-    const now=Date.now();
-    taps=taps.filter(x=>now-x<2600);
-    taps.push(now);
-    if(taps.length>=5){taps=[];toggle()}
-  }
-  function bind(){
-    document.querySelectorAll("[data-dev-trigger]").forEach(el=>{
-      if(el.dataset.devBound)return;
-      el.dataset.devBound="1";
-      el.addEventListener("click",tap);
-    });
-  }
-
-  window.GameAlpiDev={
-    isActive:()=>active,
-    setActive:v=>{active=!!v;localStorage.setItem(KEY,active?"1":"0");apply(true)},
-    toggle,
-    toast
-  };
-
-  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>{bind();apply(false)});
-  else{bind();apply(false)}
+ const KEY="gameAlpiDeveloperMode";let active=localStorage.getItem(KEY)==="1",taps=[],panelOpen=false;
+ function ensureStyle(){if(document.getElementById("gameAlpiDevStyle"))return;const s=document.createElement("style");s.id="gameAlpiDevStyle";s.textContent=`
+ .dev-only{display:none!important}body.developer-mode .dev-only{display:block!important}[data-dev-trigger]{user-select:none;-webkit-user-select:none}[data-dev-trigger].dev-tapping{animation:gaDevTap .22s ease}@keyframes gaDevTap{50%{filter:brightness(1.35);transform:scale(.96)}}
+ #gameAlpiDevProgress{position:fixed;z-index:99999;left:50%;bottom:max(22px,env(safe-area-inset-bottom));transform:translateX(-50%) translateY(12px);display:flex;align-items:center;gap:9px;padding:9px 11px;border:1px solid rgba(92,180,255,.27);border-radius:999px;color:#cae8ff;background:rgba(6,23,39,.94);box-shadow:0 16px 38px rgba(0,0,0,.38);backdrop-filter:blur(12px);font:900 8px/1 system-ui,sans-serif;letter-spacing:.08em;opacity:0;pointer-events:none;transition:.18s}#gameAlpiDevProgress.show{opacity:1;transform:translateX(-50%) translateY(0)}#gameAlpiDevProgress .dev-dots{display:flex;gap:3px}#gameAlpiDevProgress .dev-dots i{width:5px;height:5px;border-radius:50%;background:#294963}#gameAlpiDevProgress .dev-dots i.on{background:#69beff;box-shadow:0 0 8px rgba(105,190,255,.8)}
+ #gameAlpiDevBadge{position:fixed;z-index:9998;left:8px;bottom:max(8px,env(safe-area-inset-bottom));display:flex;align-items:center;gap:6px;padding:7px 9px;border:1px solid rgba(89,183,255,.30);border-radius:999px;color:#caeaff;background:linear-gradient(145deg,rgba(9,36,59,.97),rgba(10,27,46,.97));box-shadow:0 12px 30px rgba(0,0,0,.34),inset 0 1px rgba(255,255,255,.05);font:900 7px/1 system-ui,sans-serif;letter-spacing:.08em;cursor:pointer}#gameAlpiDevBadge i{width:6px;height:6px;border-radius:50%;background:#6ac3ff;box-shadow:0 0 10px #56b9ff;animation:gaDevPulse 1.5s ease-in-out infinite}@keyframes gaDevPulse{50%{opacity:.5;transform:scale(.75)}}
+ #gameAlpiDevPanel{position:fixed;z-index:100001;left:8px;bottom:max(47px,calc(env(safe-area-inset-bottom) + 47px));width:min(270px,calc(100vw - 16px));padding:12px;border:1px solid rgba(94,181,255,.24);border-radius:15px;color:#e8f5ff;background:rgba(7,24,41,.98);box-shadow:0 20px 48px rgba(0,0,0,.46);backdrop-filter:blur(16px);font-family:system-ui,sans-serif;opacity:0;transform:translateY(8px) scale(.98);pointer-events:none;transition:.16s}#gameAlpiDevPanel.show{opacity:1;transform:none;pointer-events:auto}#gameAlpiDevPanel strong{display:block;font-size:10px}#gameAlpiDevPanel p{margin:5px 0 10px;color:#87a5c2;font-size:8px;line-height:1.45}#gameAlpiDevPanel button{width:100%;padding:8px;border:1px solid rgba(255,114,139,.18);border-radius:9px;color:#ffc1cc;background:#351d27;font:850 8px system-ui,sans-serif}
+ #gameAlpiDevToast{position:fixed;z-index:100003;inset:0;display:grid;place-items:center;padding:22px;background:rgba(2,8,14,.40);backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:.18s}#gameAlpiDevToast.show{opacity:1}#gameAlpiDevToast .dev-unlock-card{width:min(310px,100%);padding:21px 17px 17px;border:1px solid rgba(104,191,255,.32);border-radius:22px;color:#eef8ff;background:linear-gradient(145deg,rgba(12,42,68,.98),rgba(6,24,42,.99));box-shadow:0 30px 80px rgba(0,0,0,.50),inset 0 1px rgba(255,255,255,.07);text-align:center;transform:translateY(14px) scale(.95);transition:.22s}#gameAlpiDevToast.show .dev-unlock-card{transform:none}#gameAlpiDevToast .dev-cube{display:grid;place-items:center;width:56px;height:56px;margin:0 auto 12px;border:1px solid rgba(111,199,255,.38);border-radius:16px;background:linear-gradient(145deg,#1e679b,#153753);box-shadow:0 12px 26px rgba(0,0,0,.26);font:1000 22px system-ui,sans-serif;transform:perspective(160px) rotateX(10deg) rotateY(-12deg)}#gameAlpiDevToast strong{display:block;font:1000 15px system-ui,sans-serif}#gameAlpiDevToast p{margin:6px 0 0;color:#8fb0cb;font:500 9px/1.5 system-ui,sans-serif}#gameAlpiDevToast small{display:block;margin-top:11px;color:#67bfff;font:900 7px system-ui,sans-serif;letter-spacing:.12em}`;document.head.appendChild(s)}
+ function progress(){let p=document.getElementById("gameAlpiDevProgress");if(!p){p=document.createElement("div");p.id="gameAlpiDevProgress";document.body.appendChild(p)}const n=taps.length;p.innerHTML=`<span>DEV ACCESS ${n}/5</span><span class="dev-dots">${[1,2,3,4,5].map(i=>`<i class="${i<=n?"on":""}"></i>`).join("")}</span>`;p.classList.toggle("show",n>=2&&n<5);clearTimeout(p._tm);p._tm=setTimeout(()=>p.classList.remove("show"),1150)}
+ function ensurePanel(){let p=document.getElementById("gameAlpiDevPanel");if(!p){p=document.createElement("div");p.id="gameAlpiDevPanel";p.innerHTML=`<strong>🧪 Developer Mode</strong><p>Test Tools akan muncul pada game yang mendukung bot/debug. Mode ini tersimpan di browser ini.</p><button type="button" id="gameAlpiDevOff">Nonaktifkan Developer Mode</button>`;document.body.appendChild(p);p.querySelector("#gameAlpiDevOff").onclick=()=>{panelOpen=false;p.classList.remove("show");setActive(false,true)}}return p}
+ function badge(){let b=document.getElementById("gameAlpiDevBadge");if(active&&!b){b=document.createElement("button");b.type="button";b.id="gameAlpiDevBadge";b.innerHTML="<i></i><span>DEV MODE</span>";b.onclick=()=>{panelOpen=!panelOpen;ensurePanel().classList.toggle("show",panelOpen)};document.body.appendChild(b)}if(!active&&b)b.remove();if(!active){const p=document.getElementById("gameAlpiDevPanel");if(p)p.remove();panelOpen=false}}
+ function unlockToast(on){let t=document.getElementById("gameAlpiDevToast");if(!t){t=document.createElement("div");t.id="gameAlpiDevToast";document.body.appendChild(t)}t.innerHTML=`<div class="dev-unlock-card"><div class="dev-cube">${on?"✓":"×"}</div><strong>${on?"Developer Mode Aktif":"Developer Mode Nonaktif"}</strong><p>${on?"Test Tools tersembunyi sekarang tersedia pada game yang mendukung.":"Tampilan kembali ke mode pemain biasa."}</p><small>${on?"GAME ALPI • DEV ACCESS":"GAME ALPI"}</small></div>`;t.classList.add("show");clearTimeout(t._tm);t._tm=setTimeout(()=>t.classList.remove("show"),1350)}
+ function apply(announce=false){ensureStyle();document.body.classList.toggle("developer-mode",active);badge();window.dispatchEvent(new CustomEvent("gamealpi:developerchange",{detail:{active}}));if(announce)unlockToast(active)}
+ function setActive(v,announce=false){active=!!v;localStorage.setItem(KEY,active?"1":"0");apply(announce)}function toggle(){setActive(!active,true)}
+ function tap(ev){const now=Date.now();taps=taps.filter(x=>now-x<2600);taps.push(now);const el=ev?.currentTarget;if(el){el.classList.remove("dev-tapping");void el.offsetWidth;el.classList.add("dev-tapping");setTimeout(()=>el.classList.remove("dev-tapping"),250)}if(taps.length>=2)progress();if(taps.length>=5){taps=[];document.getElementById("gameAlpiDevProgress")?.classList.remove("show");if(navigator.vibrate)navigator.vibrate([25,30,25]);toggle()}else if(taps.length>=2&&navigator.vibrate)navigator.vibrate(10)}
+ function bind(){document.querySelectorAll("[data-dev-trigger]").forEach(el=>{if(el.dataset.devBound)return;el.dataset.devBound="1";el.addEventListener("click",tap)})}
+ window.GameAlpiDev={isActive:()=>active,setActive:v=>setActive(v,true),toggle};
+ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>{bind();apply(false)});else{bind();apply(false)}
 })();

@@ -3,177 +3,81 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#07111f">
+  <meta name="theme-color" content="#050b14">
   <title>Game Alpi</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <main class="hub">
+  <div class="ambient ambient-a" aria-hidden="true"></div>
+  <div class="ambient ambient-b" aria-hidden="true"></div>
 
   <header class="app-header">
-    <div class="brand-mark" data-dev-trigger title="Game Alpi">GA</div>
+    <div class="brand-mark" data-dev-trigger title="Game Alpi"><span>GA</span></div>
     <div class="brand-copy">
       <strong data-dev-trigger>Game Alpi</strong>
-      <span>Main bareng. Langsung dari HP.</span>
+      <span>Party games • langsung dari HP</span>
     </div>
-    <div class="header-badge">MOBILE</div>
+    <div class="header-badge"><i></i><span>MOBILE</span></div>
   </header>
 
   <section class="featured">
     <div class="featured-copy">
-      <span class="featured-kicker">GAME TERBARU</span>
-      <h1>UNO <small>• Game Alpi</small></h1>
-      <p>Buang kartu yang cocok, gunakan kartu aksi, dan habiskan kartumu lebih dulu.</p>
+      <span class="featured-kicker">FEATURED GAME</span>
+      <h1>UNO <small>Game Alpi</small></h1>
+      <p>Cocokkan kartu, pakai action card, dan habiskan tanganmu lebih dulu.</p>
       <div class="featured-meta">
-        <span>👥 2–20</span>
-        <span>📱 Multi HP</span>
+        <span>👥 2–20</span><span>📱 Multi HP</span><span>⚡ Realtime</span>
       </div>
-      <a href="uno/" class="featured-play">MAIN SEKARANG <b>›</b></a>
+      <a href="uno/" class="featured-play"><span>MAIN SEKARANG</span><b>›</b></a>
     </div>
     <div class="featured-art" aria-hidden="true">
-      <div class="mini-card card-red">7</div>
-      <div class="mini-card card-yellow">+2</div>
-      <div class="mini-card card-wild">W</div>
+      <div class="art-shadow"></div>
+      <div class="mini-card card-red"><small>GA</small><strong>7</strong></div>
+      <div class="mini-card card-yellow"><small>GA</small><strong>+2</strong></div>
+      <div class="mini-card card-wild"><small>GA</small><strong>W</strong></div>
     </div>
   </section>
 
   <div class="section-row">
-    <div>
-      <span class="section-kicker">KOLEKSI GAME</span>
-      <h2>Pilih game</h2>
-    </div>
+    <div><span class="section-kicker">PLAY NOW</span><h2>Pilih game</h2></div>
     <span class="section-count">5 aktif</span>
   </div>
 
-  <section class="game-grid">
-    <a class="game-tile impostor" href="impostor/">
-      <div class="tile-icon">🕵️</div>
-      <strong>Impostor</strong>
-      <span>3–20</span>
-    </a>
-
-    <a class="game-tile uno" href="uno/">
-      <div class="tile-icon">🃏</div>
-      <strong>UNO</strong>
-      <span>2–20</span>
-    </a>
-
-    <a class="game-tile number" href="tebak-angka/">
-      <div class="tile-icon">🔢</div>
-      <strong>Tebak Angka</strong>
-      <span>1 Pemain</span>
-    </a>
-
-    <a class="game-tile werewolf" href="werewolf/">
-      <div class="tile-icon">🐺</div>
-      <strong>Werewolf</strong>
-      <span>5–20</span>
-    </a>
-
-    <a class="game-tile chess" href="catur/">
-      <div class="tile-icon">♟️</div>
-      <strong>Catur</strong>
-      <span>1–2</span>
-    </a>
+  <section class="game-grid active-grid">
+    <a class="game-tile impostor" href="impostor/"><div class="tile-shine"></div><div class="tile-icon">🕵️</div><div class="tile-copy"><strong>Impostor</strong><span>3–20 pemain</span></div><div class="tile-arrow">↗</div></a>
+    <a class="game-tile uno" href="uno/"><div class="tile-shine"></div><div class="tile-icon">🃏</div><div class="tile-copy"><strong>UNO</strong><span>2–20 pemain</span></div><div class="tile-arrow">↗</div></a>
+    <a class="game-tile number" href="tebak-angka/"><div class="tile-shine"></div><div class="tile-icon">🔢</div><div class="tile-copy"><strong>Tebak Angka</strong><span>Solo</span></div><div class="tile-arrow">↗</div></a>
+    <a class="game-tile werewolf" href="werewolf/"><div class="tile-shine"></div><div class="tile-icon">🐺</div><div class="tile-copy"><strong>Werewolf</strong><span>5–20 pemain</span></div><div class="tile-arrow">↗</div></a>
+    <a class="game-tile chess" href="catur/"><div class="tile-shine"></div><div class="tile-icon">♟️</div><div class="tile-copy"><strong>Catur</strong><span>1–2 pemain</span></div><div class="tile-arrow">↗</div></a>
+    <div class="game-tile collection-card" aria-hidden="true"><div class="tile-icon">✦</div><div class="tile-copy"><strong>Game Alpi</strong><span>Koleksi terus bertambah</span></div><div class="mini-orbit"></div></div>
   </section>
 
-  
-  <div class="section-row">
-    <div>
-      <span class="section-kicker">SEGERA HADIR</span>
-      <h2>Game berikutnya</h2>
-    </div>
+  <div class="section-row upcoming-head">
+    <div><span class="section-kicker">COMING SOON</span><h2>Game berikutnya</h2></div>
     <span class="section-count">11 konsep</span>
   </div>
 
   <section id="upcomingGames" class="game-grid upcoming-grid">
-    <div class="game-tile locked" aria-disabled="true">
-      <div class="lock-chip">🔒</div>
-      <div class="tile-icon">🎨</div>
-      <strong>Gambar & Tebak</strong>
-      <span>3–12</span>
-    </div>
-
-    <div class="game-tile locked" aria-disabled="true">
-      <div class="lock-chip">🔒</div>
-      <div class="tile-icon">☎️</div>
-      <strong>Bisik Gambar</strong>
-      <span>4–12</span>
-    </div>
-
-    <div class="game-tile locked" aria-disabled="true">
-      <div class="lock-chip">🔒</div>
-      <div class="tile-icon">🤥</div>
-      <strong>Jawaban Palsu</strong>
-      <span>3–12</span>
-    </div>
-
-    <div class="game-tile locked" aria-disabled="true">
-      <div class="lock-chip">🔒</div>
-      <div class="tile-icon">🔐</div>
-      <strong>Kode Rahasia</strong>
-      <span>4–12</span>
-    </div>
-
-    <div class="game-tile locked" aria-disabled="true">
-      <div class="lock-chip">🔒</div>
-      <div class="tile-icon">😂</div>
-      <strong>Jawaban Lucu</strong>
-      <span>3–12</span>
-    </div>
-
-    <div class="game-tile locked" aria-disabled="true">
-      <div class="lock-chip">🔒</div>
-      <div class="tile-icon">💣</div>
-      <strong>Bom Kata</strong>
-      <span>3–20</span>
-    </div>
-
-    <div class="game-tile locked" aria-disabled="true">
-      <div class="lock-chip">🔒</div>
-      <div class="tile-icon">👥</div>
-      <strong>Siapa Paling?</strong>
-      <span>3–20</span>
-    </div>
-
-    <div class="game-tile locked" aria-disabled="true">
-      <div class="lock-chip">🔒</div>
-      <div class="tile-icon">🔤</div>
-      <strong>Sambung Kata</strong>
-      <span>2–20</span>
-    </div>
-
-    <div class="game-tile locked" aria-disabled="true">
-      <div class="lock-chip">🔒</div>
-      <div class="tile-icon">❓</div>
-      <strong>Siapa Aku?</strong>
-      <span>3–12</span>
-    </div>
-
-    <div class="game-tile locked poker" aria-disabled="true">
-      <div class="lock-chip">🔒</div>
-      <div class="tile-icon">♠️</div>
-      <strong>Poker</strong>
-      <span>Segera</span>
-    </div>
-
-    <div class="game-tile locked domino" aria-disabled="true">
-      <div class="lock-chip">🔒</div>
-      <div class="tile-icon">🁫</div>
-      <strong>Domino</strong>
-      <span>Segera</span>
-    </div>
+    <div class="game-tile locked"><div class="lock-chip">🔒</div><div class="tile-icon">🎨</div><div class="tile-copy"><strong>Gambar & Tebak</strong><span>3–12</span></div></div>
+    <div class="game-tile locked"><div class="lock-chip">🔒</div><div class="tile-icon">☎️</div><div class="tile-copy"><strong>Bisik Gambar</strong><span>4–12</span></div></div>
+    <div class="game-tile locked"><div class="lock-chip">🔒</div><div class="tile-icon">🤥</div><div class="tile-copy"><strong>Jawaban Palsu</strong><span>3–12</span></div></div>
+    <div class="game-tile locked"><div class="lock-chip">🔒</div><div class="tile-icon">🔐</div><div class="tile-copy"><strong>Kode Rahasia</strong><span>4–12</span></div></div>
+    <div class="game-tile locked"><div class="lock-chip">🔒</div><div class="tile-icon">😂</div><div class="tile-copy"><strong>Jawaban Lucu</strong><span>3–12</span></div></div>
+    <div class="game-tile locked"><div class="lock-chip">🔒</div><div class="tile-icon">💣</div><div class="tile-copy"><strong>Bom Kata</strong><span>3–20</span></div></div>
+    <div class="game-tile locked"><div class="lock-chip">🔒</div><div class="tile-icon">👥</div><div class="tile-copy"><strong>Siapa Paling?</strong><span>3–20</span></div></div>
+    <div class="game-tile locked"><div class="lock-chip">🔒</div><div class="tile-icon">🔤</div><div class="tile-copy"><strong>Sambung Kata</strong><span>2–20</span></div></div>
+    <div class="game-tile locked"><div class="lock-chip">🔒</div><div class="tile-icon">❓</div><div class="tile-copy"><strong>Siapa Aku?</strong><span>3–12</span></div></div>
+    <div class="game-tile locked poker"><div class="lock-chip">🔒</div><div class="tile-icon">♠️</div><div class="tile-copy"><strong>Poker</strong><span>Segera</span></div></div>
+    <div class="game-tile locked domino"><div class="lock-chip">🔒</div><div class="tile-icon">🁫</div><div class="tile-copy"><strong>Domino</strong><span>Segera</span></div></div>
   </section>
 
-<section class="quick-guide">
+  <section class="quick-guide">
     <div class="guide-icon">💡</div>
-    <div>
-      <strong>Baru pertama main?</strong>
-      <p>Buka game untuk melihat tujuan, aturan dasar, dan petunjuk yang tersedia sebelum mulai bermain.</p>
-    </div>
+    <div><strong>Baru pertama main?</strong><p>Pilih game untuk melihat aturan dan cara bermain sebelum masuk ke pertandingan.</p></div>
   </section>
 
-  <footer>Game Alpi • Mobile Game Hub</footer>
+  <footer><span>GAME ALPI</span><small>Mobile Game Hub</small></footer>
 </main>
 <script src="developer.js"></script>
 </body>
