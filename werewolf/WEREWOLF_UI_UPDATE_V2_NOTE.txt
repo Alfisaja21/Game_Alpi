@@ -1,0 +1,10 @@
+
+Werewolf UI Update V2
+
+Focus:
+- Compact mobile hero
+- Cinematic dark forest direction
+- Better game launcher feeling
+- Role cards prepared for horizontal swipe
+
+Logic, Supabase, RPC, and gameplay flow are unchanged.
