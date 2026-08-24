@@ -144,3 +144,45 @@ $("startGameBtn").onclick=startGame;$("leaveLobbyBtn").onclick=leave;$("roleBtn"
 
 (async function boot(){const raw=localStorage.getItem(STORE);if(raw){try{const x=JSON.parse(raw);roomCode=x.roomCode;playerId=x.playerId;token=x.token;playerName=x.playerName;isHost=x.isHost;if(roomCode&&playerId&&token){await enter();return}}catch{clear()}}const q=new URLSearchParams(location.search).get("room");if(q){$("roomCodeInput").value=normCode(q);show("setupScreen")}})();
 
+
+
+// ==============================
+// WEREWOLF V9 LANDING BUTTON FIX
+// ==============================
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    const createLanding = document.getElementById("landingCreateBtn");
+    const joinLanding = document.getElementById("landingJoinBtn");
+
+    if (createLanding) {
+        createLanding.onclick = () => {
+            const setup = document.getElementById("setupScreen");
+            if (setup) {
+                show("setupScreen");
+            }
+
+            const nameInput = document.getElementById("playerName");
+            if (nameInput) {
+                setTimeout(() => nameInput.focus(), 200);
+            }
+        };
+    }
+
+    if (joinLanding) {
+        joinLanding.onclick = () => {
+            const join = document.getElementById("joinScreen") ||
+                         document.getElementById("setupScreen");
+
+            if (join) {
+                show(join.id);
+            }
+
+            const roomInput = document.getElementById("roomCode");
+            if (roomInput) {
+                setTimeout(() => roomInput.focus(), 200);
+            }
+        };
+    }
+
+});

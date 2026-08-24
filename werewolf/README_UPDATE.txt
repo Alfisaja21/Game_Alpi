@@ -1,15 +1,11 @@
-GAME ALPI WEREWOLF
+Game Alpi Werewolf V9
 
-Current:
-- Original Supabase room logic is used.
-- Create Room uses werewolf_create_room RPC.
-- Join Room uses werewolf_join_room RPC.
-- UI updates merged into original files.
+Changes:
+- Landing CREATE ROOM button connected.
+- Landing JOIN ROOM button connected.
+- Existing Supabase RPC logic preserved.
+- Removed old update note files.
 
 Next:
-- Add lobby realtime polish.
-- Add audio assets:
-  lobby, role reveal, night, vote, win, lose.
-- Improve animations.
-
-No database schema changed.
+- Realtime lobby polish.
+- Audio integration.
